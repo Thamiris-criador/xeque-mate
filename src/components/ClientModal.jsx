@@ -1,10 +1,12 @@
 import { useState } from 'react'
-import { X } from 'lucide-react'
+import { X, Trash2 } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import './ClientModal.css'
 
-export default function ClientModal({ client, responsaveis, onClose, onSaved }) {
+export default function ClientModal({ client, responsaveis, onClose, onSaved, onDeleted }) {
   const isEdit = Boolean(client)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [form, setForm] = useState({
     nome: client?.nome || '',
     whatsapp: client?.whatsapp || '',
@@ -56,15 +58,67 @@ export default function ClientModal({ client, responsaveis, onClose, onSaved }) 
     onSaved()
   }
 
+  async function handleDelete() {
+    setDeleting(true)
+    setError(null)
+
+    const { error: deleteError } = await supabase.from('clientes').delete().eq('id', client.id)
+
+    setDeleting(false)
+
+    if (deleteError) {
+      setError(deleteError.message)
+      return
+    }
+
+    onDeleted()
+  }
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-box" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>{isEdit ? 'Editar cliente' : 'Cadastrar cliente'}</h2>
-          <button className="modal-close" onClick={onClose}>
-            <X size={18} />
-          </button>
+          <div className="modal-header-actions">
+            {isEdit && (
+              <button
+                type="button"
+                className="modal-delete-trigger"
+                title="Excluir cliente"
+                onClick={() => setConfirmingDelete(true)}
+              >
+                <Trash2 size={16} />
+              </button>
+            )}
+            <button className="modal-close" onClick={onClose}>
+              <X size={18} />
+            </button>
+          </div>
         </div>
+
+        {confirmingDelete && (
+          <div className="modal-confirm-delete">
+            <span>Excluir {client.nome}? Essa ação não pode ser desfeita.</span>
+            <div className="modal-confirm-delete-actions">
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setConfirmingDelete(false)}
+                disabled={deleting}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn-danger"
+                onClick={handleDelete}
+                disabled={deleting}
+              >
+                {deleting ? 'Excluindo...' : 'Confirmar exclusão'}
+              </button>
+            </div>
+          </div>
+        )}
 
         <form className="modal-form" onSubmit={handleSubmit}>
           <label>
@@ -137,6 +191,7 @@ export default function ClientModal({ client, responsaveis, onClose, onSaved }) 
                 <option value="em_dia">Em dia</option>
                 <option value="atrasado">Atrasado</option>
                 <option value="inadimplente">Inadimplente</option>
+                <option value="cancelado">Cancelado</option>
               </select>
             </label>
           </div>

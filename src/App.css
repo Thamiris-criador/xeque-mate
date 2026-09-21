@@ -15,3 +15,11 @@
   padding: 32px 40px;
   overflow-y: auto;
 }
+
+.app-loading {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}

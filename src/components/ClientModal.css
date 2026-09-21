@@ -31,14 +31,58 @@
   margin: 0;
 }
 
-.modal-close {
+.modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modal-close,
+.modal-delete-trigger {
   background: transparent;
   border: none;
   color: var(--text-muted);
+  display: flex;
 }
 
 .modal-close:hover {
   color: var(--text);
+}
+
+.modal-delete-trigger:hover {
+  color: var(--red);
+}
+
+.modal-confirm-delete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: rgba(224, 90, 90, 0.1);
+  border-bottom: 1px solid var(--red);
+  padding: 12px 24px;
+  font-size: 13px;
+}
+
+.modal-confirm-delete-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-danger {
+  background: var(--red);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.btn-danger:hover {
+  background: #c94747;
 }
 
 .modal-form {

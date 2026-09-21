@@ -113,7 +113,7 @@
 .clients-table-head,
 .clients-table-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1.2fr 1fr 1.4fr 80px;
+  grid-template-columns: 2fr 1fr 1fr 1.2fr 1fr 1.4fr;
   gap: 12px;
   align-items: center;
   padding: 14px 20px;
@@ -137,6 +137,30 @@
 
 .client-name {
   font-weight: 700;
+  width: 190px;
+  flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.client-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.client-view-btn {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  display: flex;
+  padding: 2px;
+}
+
+.client-view-btn:hover {
+  color: var(--green);
 }
 
 .client-phone {
@@ -178,26 +202,6 @@
 .proxima-acao-text {
   color: var(--text-muted);
   font-size: 12px;
-}
-
-.row-actions {
-  display: flex;
-  gap: 6px;
-  justify-content: flex-end;
-}
-
-.row-actions button {
-  background: var(--bg-hover);
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-  border-radius: 6px;
-  padding: 6px;
-  display: flex;
-}
-
-.row-actions button:hover {
-  color: var(--text);
-  border-color: var(--green);
 }
 
 .table-empty {

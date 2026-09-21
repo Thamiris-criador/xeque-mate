@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react'
-import { Plus, MessageCircle, Pencil } from 'lucide-react'
+import { Plus, Eye } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import ClientModal from './ClientModal.jsx'
 import './ClientesPage.css'
@@ -8,6 +8,7 @@ const TABS = [
   { key: 'todos', label: 'Todos os clientes' },
   { key: 'contemplados', label: 'Contemplados' },
   { key: 'inadimplentes', label: 'Inadimplentes' },
+  { key: 'cancelados', label: 'Cancelados' },
 ]
 
 const JORNADA_LABELS = {
@@ -21,6 +22,7 @@ const FINANCEIRO_LABELS = {
   em_dia: 'Em dia',
   atrasado: 'Atrasado',
   inadimplente: 'Inadimplente',
+  cancelado: 'Cancelado',
 }
 
 function JornadaBadge({ value }) {
@@ -28,7 +30,8 @@ function JornadaBadge({ value }) {
 }
 
 function FinanceiroBadge({ value }) {
-  const cls = value === 'em_dia' ? 'badge-green' : 'badge-red'
+  const cls =
+    value === 'em_dia' ? 'badge-green' : value === 'cancelado' ? 'badge-neutral' : 'badge-red'
   return <span className={`badge ${cls}`}>{(FINANCEIRO_LABELS[value] || value || '—').toUpperCase()}</span>
 }
 
@@ -79,6 +82,7 @@ export default function ClientesPage() {
     return clientes.filter((c) => {
       if (tab === 'contemplados' && c.jornada !== 'contemplado') return false
       if (tab === 'inadimplentes' && c.financeiro_status !== 'inadimplente') return false
+      if (tab === 'cancelados' && c.financeiro_status !== 'cancelado') return false
 
       if (responsavelFiltro !== 'todos' && String(c.responsavel_id) !== responsavelFiltro) return false
 
@@ -94,12 +98,6 @@ export default function ClientesPage() {
       return true
     })
   }, [clientes, tab, responsavelFiltro, search])
-
-  function openWhatsapp(numero) {
-    if (!numero) return
-    const digits = numero.replace(/\D/g, '')
-    window.open(`https://wa.me/55${digits}`, '_blank')
-  }
 
   function handleEdit(client) {
     setEditingClient(client)
@@ -173,7 +171,6 @@ export default function ClientesPage() {
           <span>JORNADA</span>
           <span>FINANCEIRO</span>
           <span>PRÓXIMA AÇÃO</span>
-          <span></span>
         </div>
 
         {loading ? (
@@ -184,7 +181,14 @@ export default function ClientesPage() {
           filtered.map((c) => (
             <div className="clients-table-row" key={c.id}>
               <div className="client-cell">
-                <div className="client-name">{c.nome}</div>
+                <div className="client-name-row">
+                  <div className="client-name" title={c.nome}>
+                    {c.nome}
+                  </div>
+                  <button className="client-view-btn" title="Ver cliente" onClick={() => handleEdit(c)}>
+                    <Eye size={15} />
+                  </button>
+                </div>
                 <div className="client-phone">{c.whatsapp || '—'}</div>
               </div>
               <div>
@@ -200,14 +204,6 @@ export default function ClientesPage() {
               <div>
                 <ProximaAcaoBadge value={c.proxima_acao} />
               </div>
-              <div className="row-actions">
-                <button title="WhatsApp" onClick={() => openWhatsapp(c.whatsapp)}>
-                  <MessageCircle size={16} />
-                </button>
-                <button title="Editar" onClick={() => handleEdit(c)}>
-                  <Pencil size={16} />
-                </button>
-              </div>
             </div>
           ))
         )}
@@ -219,6 +215,10 @@ export default function ClientesPage() {
           responsaveis={responsaveis}
           onClose={() => setModalOpen(false)}
           onSaved={() => {
+            setModalOpen(false)
+            loadData()
+          }}
+          onDeleted={() => {
             setModalOpen(false)
             loadData()
           }}
