@@ -79,7 +79,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     Promise.all([
-      supabase.from('clientes').select('*, responsavel:equipe(id, nome)'),
+      supabase.from('clientes').select('*, responsavel:equipe!responsavel_id(id, nome)'),
       supabase.from('tarefas').select('*, cliente:clientes(id, nome, proxima_acao), responsavel:equipe(id, nome)'),
       supabase.from('reversoes').select('status, data_pedido, data_reversao'),
       supabase.from('indicacoes').select('status, data_pedido'),

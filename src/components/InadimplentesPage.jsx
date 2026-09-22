@@ -17,7 +17,7 @@ export default function InadimplentesPage() {
     setError(null)
     const { data, error: fetchError } = await supabase
       .from('clientes')
-      .select('*, responsavel:equipe(id, nome)')
+      .select('*, responsavel:equipe!responsavel_id(id, nome)')
       .in('financeiro_status', ['atrasado', 'inadimplente'])
 
     if (fetchError) {

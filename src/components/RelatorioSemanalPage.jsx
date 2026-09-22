@@ -35,7 +35,7 @@ export default function RelatorioSemanalPage() {
 
   useEffect(() => {
     Promise.all([
-      supabase.from('clientes').select('*, responsavel:equipe(id, nome)'),
+      supabase.from('clientes').select('*, responsavel:equipe!responsavel_id(id, nome)'),
       supabase.from('tarefas').select('*'),
       supabase.from('reversoes').select('*'),
       supabase.from('indicacoes').select('*'),

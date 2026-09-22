@@ -17,7 +17,7 @@ export default function ContempladosPage() {
     setError(null)
     const { data, error: fetchError } = await supabase
       .from('clientes')
-      .select('*, responsavel:equipe(id, nome)')
+      .select('*, responsavel:equipe!responsavel_id(id, nome)')
       .eq('financeiro_status', 'contemplado')
       .order('data_contemplacao', { ascending: false })
 

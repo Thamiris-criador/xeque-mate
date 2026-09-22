@@ -69,7 +69,7 @@ export default function ClientesPage() {
 
     const { data, error: fetchError } = await supabase
       .from('clientes')
-      .select('*, responsavel:equipe(id, nome)')
+      .select('*, responsavel:equipe!responsavel_id(id, nome)')
       .order('nome', { ascending: true })
 
     if (fetchError) {
