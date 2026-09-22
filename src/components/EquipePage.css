@@ -1,0 +1,87 @@
+.equipe-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.equipe-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+}
+
+.equipe-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-hover);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.equipe-info {
+  flex: 1;
+}
+
+.equipe-nome {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.equipe-email {
+  color: var(--text-muted);
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.equipe-area {
+  margin-bottom: 32px;
+}
+
+.equipe-area-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.equipe-area-icon {
+  color: var(--green);
+}
+
+.equipe-area-titulo {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.equipe-area-subtitulo {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.equipe-area-descricao {
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.6;
+  max-width: 720px;
+  margin: 0 0 14px;
+}
+
+.equipe-area-vazia {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-style: italic;
+}
+
+.equipe-list-lideranca .equipe-card {
+  border-color: var(--green);
+  max-width: 320px;
+}

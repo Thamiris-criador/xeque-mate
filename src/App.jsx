@@ -4,6 +4,14 @@ import Sidebar from './components/Sidebar.jsx'
 import Header from './components/Header.jsx'
 import ClientesPage from './components/ClientesPage.jsx'
 import Dashboard from './components/Dashboard.jsx'
+import EquipePage from './components/EquipePage.jsx'
+import CulturaPage from './components/CulturaPage.jsx'
+import TarefasPage from './components/TarefasPage.jsx'
+import ReversaoPage from './components/ReversaoPage.jsx'
+import IndicacoesPage from './components/IndicacoesPage.jsx'
+import ContempladosPage from './components/ContempladosPage.jsx'
+import InadimplentesPage from './components/InadimplentesPage.jsx'
+import RelatorioSemanalPage from './components/RelatorioSemanalPage.jsx'
 import PlaceholderPage from './components/PlaceholderPage.jsx'
 import LoginPage from './components/LoginPage.jsx'
 import './App.css'
@@ -14,12 +22,14 @@ const PAGE_TITLES = {
   cultura: 'Cultura',
   tarefas: 'Tarefas',
   clientes: 'Clientes',
-  onboarding: 'Onboarding',
+  'relatorio-semanal': 'Relatório semanal',
   financeiro: 'Financeiro',
   inadimplentes: 'Inadimplentes',
   aniversariantes: 'Aniversariantes',
   contemplados: 'Contemplados',
-  relacionamento: 'Relacionamento',
+  reversao: 'Reversão',
+  indicacoes: 'Indicações',
+  configuracoes: 'Configurações',
 }
 
 export default function App() {
@@ -58,6 +68,22 @@ export default function App() {
             <ClientesPage />
           ) : page === 'dashboard' ? (
             <Dashboard />
+          ) : page === 'equipe' ? (
+            <EquipePage />
+          ) : page === 'cultura' ? (
+            <CulturaPage />
+          ) : page === 'tarefas' ? (
+            <TarefasPage />
+          ) : page === 'reversao' ? (
+            <ReversaoPage />
+          ) : page === 'indicacoes' ? (
+            <IndicacoesPage />
+          ) : page === 'contemplados' ? (
+            <ContempladosPage />
+          ) : page === 'inadimplentes' ? (
+            <InadimplentesPage />
+          ) : page === 'relatorio-semanal' ? (
+            <RelatorioSemanalPage />
           ) : (
             <PlaceholderPage title={PAGE_TITLES[page]} />
           )}

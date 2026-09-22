@@ -5,6 +5,14 @@
   margin-bottom: 24px;
 }
 
+.dashboard-section-title {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  margin: 0 0 12px;
+}
+
 .stat-tile {
   background: var(--bg-card);
   border: 1px solid var(--border);

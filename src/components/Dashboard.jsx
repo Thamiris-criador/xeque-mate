@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Users, CheckCircle2, Clock, AlertTriangle, XCircle, Award } from 'lucide-react'
+import {
+  Users, CheckCircle2, Clock, AlertTriangle, XCircle, Award,
+  PhoneCall, ListTodo, CalendarClock, Undo2, RotateCcw, Share2,
+  UserCheck, CalendarCheck, Gauge, HelpCircle,
+} from 'lucide-react'
 import {
   ResponsiveContainer,
   BarChart,
@@ -10,6 +14,7 @@ import {
   Tooltip,
 } from 'recharts'
 import { supabase } from '../lib/supabase.js'
+import { getPeriodoRange, dentroDoPeriodo, PERIODO_LABELS, formatarData, PRIORIDADE_COLOR } from '../lib/negocio.js'
 import './Dashboard.css'
 
 const STATUS_ORDER = ['em_dia', 'atrasado', 'inadimplente', 'cancelado']
@@ -21,9 +26,9 @@ const STATUS_META = {
   cancelado: { label: 'Cancelado', color: 'var(--gray-chart)' },
 }
 
-function StatTile({ icon: Icon, label, value, color }) {
+function StatTile({ icon: Icon, label, value, color, hint }) {
   return (
-    <div className="stat-tile">
+    <div className="stat-tile" title={hint}>
       <div className="stat-tile-icon" style={{ color }}>
         <Icon size={18} />
       </div>
@@ -65,42 +70,89 @@ function StatusLegend() {
 
 export default function Dashboard() {
   const [clientes, setClientes] = useState([])
+  const [tarefas, setTarefas] = useState([])
+  const [reversoes, setReversoes] = useState([])
+  const [indicacoes, setIndicacoes] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [periodo, setPeriodo] = useState('semana')
 
   useEffect(() => {
-    supabase
-      .from('clientes')
-      .select('financeiro_status, jornada, responsavel:equipe(id, nome)')
-      .then(({ data, error: fetchError }) => {
-        if (fetchError) {
-          setError(fetchError.message)
-        } else {
-          setClientes(data || [])
-        }
-        setLoading(false)
-      })
+    Promise.all([
+      supabase.from('clientes').select('*, responsavel:equipe(id, nome)'),
+      supabase.from('tarefas').select('*, cliente:clientes(id, nome, proxima_acao), responsavel:equipe(id, nome)'),
+      supabase.from('reversoes').select('status, data_pedido, data_reversao'),
+      supabase.from('indicacoes').select('status, data_pedido'),
+    ]).then(([c, t, r, i]) => {
+      const fetchError = c.error || t.error || r.error || i.error
+      if (fetchError) {
+        setError(fetchError.message)
+      } else {
+        setClientes(c.data || [])
+        setTarefas(t.data || [])
+        setReversoes(r.data || [])
+        setIndicacoes(i.data || [])
+      }
+      setLoading(false)
+    })
   }, [])
 
   const totals = useMemo(() => {
     const byStatus = { em_dia: 0, atrasado: 0, inadimplente: 0, cancelado: 0 }
-    let contemplados = 0
     for (const c of clientes) {
       if (byStatus[c.financeiro_status] !== undefined) byStatus[c.financeiro_status] += 1
-      if (c.jornada === 'contemplado') contemplados += 1
     }
-    return { total: clientes.length, byStatus, contemplados }
+    return { total: clientes.length, byStatus }
   }, [clientes])
 
-  const distribuicaoGeral = useMemo(
-    () => [
-      {
-        nome: 'Todos',
-        ...totals.byStatus,
-      },
-    ],
-    [totals]
-  )
+  const metrics = useMemo(() => {
+    const { fim: fimPeriodo } = getPeriodoRange(periodo)
+    const hoje = new Date()
+    hoje.setHours(0, 0, 0, 0)
+
+    const novosClientes = clientes.filter((c) => dentroDoPeriodo(c.created_at, periodo)).length
+    const clientesContatados = clientes.filter((c) => dentroDoPeriodo(c.ultimo_contato, periodo)).length
+    const emAtraso = clientes.filter((c) => c.financeiro_status === 'atrasado').length
+    const inadimplentes = clientes.filter((c) => c.financeiro_status === 'inadimplente').length
+    const contempladosPeriodo = clientes.filter((c) => dentroDoPeriodo(c.data_contemplacao, periodo)).length
+    const proximasAssembleias = clientes.filter((c) => {
+      if (!c.proxima_assembleia) return false
+      const d = new Date(c.proxima_assembleia + 'T00:00:00')
+      return d >= hoje && d <= fimPeriodo
+    }).length
+
+    const clientesComPendencia = new Set(
+      tarefas.filter((t) => ['pendente', 'em_andamento'].includes(t.status) && t.cliente_id).map((t) => t.cliente_id)
+    ).size
+    const pendenciasResolvidas = tarefas.filter((t) => t.status === 'concluida' && dentroDoPeriodo(t.data_conclusao, periodo)).length
+    const tarefasHoje = tarefas.filter((t) => t.data === hoje.toISOString().slice(0, 10) && !['concluida', 'cancelada'].includes(t.status)).length
+    const tarefasAtrasadas = tarefas.filter((t) => t.data < hoje.toISOString().slice(0, 10) && !['concluida', 'cancelada'].includes(t.status)).length
+
+    const cancelamentos = reversoes.filter((r) => dentroDoPeriodo(r.data_pedido, periodo)).length
+    const emReversao = reversoes.filter((r) => ['em_contato', 'demonstrou_interesse', 'em_negociacao'].includes(r.status)).length
+    const reversoesConfirmadas = reversoes.filter((r) => r.status === 'revertido' && dentroDoPeriodo(r.data_reversao, periodo)).length
+
+    const indicacoesSolicitadas = indicacoes.filter((i) => dentroDoPeriodo(i.data_pedido, periodo)).length
+    const indicacoesRecebidas = indicacoes.filter((i) => i.status !== 'solicitada').length
+
+    const proximasAcoes = tarefas
+      .filter((t) => ['pendente', 'em_andamento'].includes(t.status) && t.data <= hoje.toISOString().slice(0, 10))
+      .sort((a, b) => {
+        const ordem = { vermelho: 0, amarelo: 1, verde: 2 }
+        return (ordem[a.prioridade] ?? 3) - (ordem[b.prioridade] ?? 3) || a.data.localeCompare(b.data)
+      })
+      .slice(0, 15)
+
+    return {
+      novosClientes, clientesContatados, emAtraso, inadimplentes, contempladosPeriodo, proximasAssembleias,
+      clientesComPendencia, pendenciasResolvidas, tarefasHoje, tarefasAtrasadas,
+      cancelamentos, emReversao, reversoesConfirmadas,
+      indicacoesSolicitadas, indicacoesRecebidas,
+      proximasAcoes,
+    }
+  }, [clientes, tarefas, reversoes, indicacoes, periodo])
+
+  const distribuicaoGeral = useMemo(() => [{ nome: 'Todos', ...totals.byStatus }], [totals])
 
   const porResponsavel = useMemo(() => {
     const map = new Map()
@@ -120,7 +172,7 @@ export default function Dashboard() {
       <div className="page-header">
         <div>
           <h1 className="page-title">DASHBOARD</h1>
-          <p className="page-subtitle">Visão geral da carteira de clientes.</p>
+          <p className="page-subtitle">Visão gerencial da operação de pós-vendas.</p>
         </div>
       </div>
 
@@ -132,13 +184,75 @@ export default function Dashboard() {
         <>
           <div className="stat-tiles-row">
             <StatTile icon={Users} label="Total de clientes" value={totals.total} color="var(--blue)" />
-            <StatTile icon={CheckCircle2} label="Em dia" value={totals.byStatus.em_dia} color="var(--green)" />
-            <StatTile icon={Clock} label="Atrasados" value={totals.byStatus.atrasado} color="var(--orange)" />
-            <StatTile icon={AlertTriangle} label="Inadimplentes" value={totals.byStatus.inadimplente} color="var(--red)" />
-            <StatTile icon={XCircle} label="Cancelados" value={totals.byStatus.cancelado} color="var(--gray-chart)" />
-            <StatTile icon={Award} label="Contemplados" value={totals.contemplados} color="var(--blue)" />
           </div>
 
+          <div className="tabs">
+            {Object.entries(PERIODO_LABELS).map(([key, label]) => (
+              <button key={key} className={`tab${periodo === key ? ' active' : ''}`} onClick={() => setPeriodo(key)}>
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <div className="dashboard-section-title">Clientes</div>
+          <div className="stat-tiles-row">
+            <StatTile icon={Users} label="Novos clientes" value={metrics.novosClientes} color="var(--blue)" />
+            <StatTile icon={PhoneCall} label="Clientes contatados" value={metrics.clientesContatados} color="var(--green)" />
+            <StatTile icon={Clock} label="Clientes em atraso" value={metrics.emAtraso} color="var(--orange)" />
+            <StatTile icon={AlertTriangle} label="Clientes inadimplentes" value={metrics.inadimplentes} color="var(--red)" />
+            <StatTile icon={XCircle} label="Cancelamentos" value={metrics.cancelamentos} color="var(--red)" />
+            <StatTile icon={Award} label="Clientes contemplados" value={metrics.contempladosPeriodo} color="var(--red)" />
+          </div>
+
+          <div className="dashboard-section-title">Pendências e tarefas</div>
+          <div className="stat-tiles-row">
+            <StatTile icon={ListTodo} label="Clientes com pendências abertas" value={metrics.clientesComPendencia} color="var(--orange)" />
+            <StatTile icon={CheckCircle2} label="Pendências resolvidas" value={metrics.pendenciasResolvidas} color="var(--green)" />
+            <StatTile icon={CalendarCheck} label="Tarefas do dia" value={metrics.tarefasHoje} color="var(--blue)" />
+            <StatTile icon={CalendarClock} label="Tarefas atrasadas" value={metrics.tarefasAtrasadas} color="var(--red)" />
+          </div>
+
+          <div className="dashboard-section-title">Reversão e indicações</div>
+          <div className="stat-tiles-row">
+            <StatTile icon={RotateCcw} label="Em processo de reversão" value={metrics.emReversao} color="var(--orange)" />
+            <StatTile icon={Undo2} label="Reversões confirmadas" value={metrics.reversoesConfirmadas} color="var(--green)" />
+            <StatTile icon={Share2} label="Indicações solicitadas" value={metrics.indicacoesSolicitadas} color="var(--blue)" />
+            <StatTile icon={UserCheck} label="Indicações recebidas" value={metrics.indicacoesRecebidas} color="var(--green)" />
+          </div>
+
+          <div className="dashboard-section-title">Consórcio</div>
+          <div className="stat-tiles-row">
+            <StatTile icon={CalendarClock} label="Próximas assembleias" value={metrics.proximasAssembleias} color="var(--orange)" />
+            <StatTile
+              icon={HelpCircle}
+              label="Clientes elegíveis para lance"
+              value="—"
+              color="var(--gray-chart)"
+              hint="Regra de elegibilidade para lance ainda não foi definida com a gestão."
+            />
+          </div>
+
+          <div className="dashboard-section-title">Próximas ações — clientes que precisam de contato hoje</div>
+          <div className="equipe-list">
+            {metrics.proximasAcoes.length === 0 ? (
+              <div className="table-empty">Nenhuma ação pendente para hoje.</div>
+            ) : (
+              metrics.proximasAcoes.map((t) => (
+                <div className="tarefa-row" key={t.id} style={{ cursor: 'default' }}>
+                  <span className="tarefa-prioridade" style={{ background: PRIORIDADE_COLOR[t.prioridade] }} />
+                  <div className="tarefa-info">
+                    <div className="tarefa-titulo">{t.cliente?.nome || 'Sem cliente'} — {t.titulo}</div>
+                    <div className="tarefa-meta">
+                      {t.responsavel?.nome || 'Sem responsável'} · prazo {formatarData(t.data)}
+                      {t.cliente?.proxima_acao && ` · ${t.cliente.proxima_acao}`}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="dashboard-section-title">Gráficos</div>
           <div className="charts-grid">
             <div className="chart-card">
               <div className="chart-card-title">Distribuição por status financeiro</div>

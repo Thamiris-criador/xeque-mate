@@ -37,7 +37,7 @@ export default function LoginPage() {
         </div>
 
         <h1 className="login-title">Entrar no painel</h1>
-        <p className="login-subtitle">Pós-vendas · Xeque Mate</p>
+        <p className="login-subtitle">ACESSO TOTAL</p>
 
         <form className="login-form" onSubmit={handleLogin}>
           <label>

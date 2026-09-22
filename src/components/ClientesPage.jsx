@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState, useCallback } from 'react'
-import { Plus, Eye } from 'lucide-react'
+import { Plus, Eye, Upload } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import ClientModal from './ClientModal.jsx'
+import ImportModal from './ImportModal.jsx'
 import './ClientesPage.css'
 
 const TABS = [
@@ -22,7 +23,18 @@ const FINANCEIRO_LABELS = {
   em_dia: 'Em dia',
   atrasado: 'Atrasado',
   inadimplente: 'Inadimplente',
+  acordo: 'Acordo',
   cancelado: 'Cancelado',
+  contemplado: 'Contemplado',
+}
+
+const FINANCEIRO_BADGE_CLASS = {
+  em_dia: 'badge-green',
+  atrasado: 'badge-red',
+  inadimplente: 'badge-red',
+  acordo: 'badge-orange',
+  cancelado: 'badge-neutral',
+  contemplado: 'badge-red',
 }
 
 function JornadaBadge({ value }) {
@@ -30,8 +42,7 @@ function JornadaBadge({ value }) {
 }
 
 function FinanceiroBadge({ value }) {
-  const cls =
-    value === 'em_dia' ? 'badge-green' : value === 'cancelado' ? 'badge-neutral' : 'badge-red'
+  const cls = FINANCEIRO_BADGE_CLASS[value] || 'badge-neutral'
   return <span className={`badge ${cls}`}>{(FINANCEIRO_LABELS[value] || value || '—').toUpperCase()}</span>
 }
 
@@ -50,6 +61,7 @@ export default function ClientesPage() {
   const [error, setError] = useState(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [editingClient, setEditingClient] = useState(null)
+  const [importOpen, setImportOpen] = useState(false)
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -73,10 +85,13 @@ export default function ClientesPage() {
     loadData()
     supabase
       .from('equipe')
-      .select('id, nome')
+      .select('id, nome, area')
       .order('nome')
       .then(({ data }) => setResponsaveis(data || []))
   }, [loadData])
+
+  const vendedores = useMemo(() => responsaveis.filter((r) => r.area === 'Comercial'), [responsaveis])
+  const responsaveisPosVendas = useMemo(() => responsaveis.filter((r) => r.area === 'Pós-Vendas'), [responsaveis])
 
   const filtered = useMemo(() => {
     return clientes.filter((c) => {
@@ -88,7 +103,7 @@ export default function ClientesPage() {
 
       if (search.trim()) {
         const q = search.trim().toLowerCase()
-        const haystack = [c.nome, c.whatsapp, c.proposta, c.grupo, c.cota, c.modelo]
+        const haystack = [c.nome, c.cpf, c.whatsapp, c.email, c.proposta, c.grupo, c.cota, c.modelo]
           .filter(Boolean)
           .join(' ')
           .toLowerCase()
@@ -118,9 +133,18 @@ export default function ClientesPage() {
             Base única. Inadimplência, onboarding, contemplação e aniversários são visões geradas a partir deste cadastro.
           </p>
         </div>
-        <button className="btn-primary" onClick={handleNew}>
-          <Plus size={16} /> Cadastrar cliente
-        </button>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button
+            className="btn-secondary"
+            style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+            onClick={() => setImportOpen(true)}
+          >
+            <Upload size={16} /> Importar clientes
+          </button>
+          <button className="btn-primary" onClick={handleNew}>
+            <Plus size={16} /> Cadastrar cliente
+          </button>
+        </div>
       </div>
 
       <div className="tabs">
@@ -138,7 +162,7 @@ export default function ClientesPage() {
       <div className="filters-row">
         <input
           className="filter-search"
-          placeholder="Nome, WhatsApp, proposta, grupo, cota ou modelo"
+          placeholder="Nome, CPF, telefone, e-mail, proposta, grupo ou cota"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -212,7 +236,8 @@ export default function ClientesPage() {
       {modalOpen && (
         <ClientModal
           client={editingClient}
-          responsaveis={responsaveis}
+          responsaveisPosVendas={responsaveisPosVendas}
+          vendedores={vendedores}
           onClose={() => setModalOpen(false)}
           onSaved={() => {
             setModalOpen(false)
@@ -220,6 +245,16 @@ export default function ClientesPage() {
           }}
           onDeleted={() => {
             setModalOpen(false)
+            loadData()
+          }}
+        />
+      )}
+
+      {importOpen && (
+        <ImportModal
+          onClose={() => setImportOpen(false)}
+          onFinished={() => {
+            setImportOpen(false)
             loadData()
           }}
         />

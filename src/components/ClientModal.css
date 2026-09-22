@@ -18,6 +18,120 @@
   overflow-y: auto;
 }
 
+.modal-box-large {
+  max-width: 680px;
+}
+
+.modal-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+
+.modal-tab {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 12px 10px;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+}
+
+.modal-tab:hover:not(:disabled) {
+  color: var(--text);
+}
+
+.modal-tab.active {
+  color: var(--green);
+  border-bottom-color: var(--green);
+}
+
+.modal-tab:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.modal-subsection {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.modal-hint {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.modal-hint strong {
+  color: var(--text);
+}
+
+.modal-checkbox {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 8px !important;
+  font-size: 12px;
+  color: var(--text) !important;
+}
+
+.modal-checkbox input {
+  width: auto;
+}
+
+.modal-subtab-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-subtab-add {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.modal-obs-add {
+  gap: 10px !important;
+}
+
+.modal-obs-add input {
+  flex: 1;
+}
+
+.historico-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.historico-item {
+  display: flex;
+  gap: 14px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.historico-data {
+  color: var(--text-muted);
+  font-size: 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 .modal-header {
   display: flex;
   align-items: center;
