@@ -1,8 +1,41 @@
 import { useEffect, useMemo, useState, useCallback } from 'react'
+import { FileText, KeyRound, CheckCircle2 } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import ClientModal from './ClientModal.jsx'
 import { formatarData } from '../lib/negocio.js'
 import './EquipePage.css'
+import './Dashboard.css'
+
+const ETAPAS = [
+  { key: 'documentacao', label: 'Em documentação', icon: FileText, color: 'var(--orange)' },
+  { key: 'carta_liberada', label: 'Carta liberada para uso', icon: KeyRound, color: 'var(--blue)' },
+  { key: 'concluido', label: 'Processo concluído', icon: CheckCircle2, color: 'var(--green)' },
+]
+
+function StatTile({ icon: Icon, label, value, color }) {
+  return (
+    <div className="stat-tile">
+      <div className="stat-tile-icon" style={{ color }}>
+        <Icon size={18} />
+      </div>
+      <div className="stat-tile-value">{value}</div>
+      <div className="stat-tile-label">{label}</div>
+    </div>
+  )
+}
+
+function EtapaStepper({ etapaAtual }) {
+  const indiceAtual = ETAPAS.findIndex((e) => e.key === (etapaAtual || 'documentacao'))
+  return (
+    <div className="etapa-stepper">
+      {ETAPAS.map((e, i) => (
+        <span key={e.key} className={`etapa-step${i <= indiceAtual ? ' done' : ''}${i === indiceAtual ? ' current' : ''}`}>
+          {e.label}
+        </span>
+      ))}
+    </div>
+  )
+}
 
 export default function ContempladosPage() {
   const [clientes, setClientes] = useState([])
@@ -38,13 +71,31 @@ export default function ContempladosPage() {
   const vendedores = useMemo(() => equipe.filter((e) => e.area === 'Comercial'), [equipe])
   const responsaveisPosVendas = useMemo(() => equipe.filter((e) => e.area === 'Pós-Vendas'), [equipe])
 
+  const contagem = useMemo(() => {
+    const c = { documentacao: 0, carta_liberada: 0, concluido: 0 }
+    for (const cliente of clientes) {
+      const etapa = cliente.status_documentacao || 'documentacao'
+      if (c[etapa] !== undefined) c[etapa] += 1
+    }
+    return c
+  }, [clientes])
+
   return (
     <div>
       <div className="page-header">
         <div>
-          <h1 className="page-title">CONTEMPLADOS</h1>
-          <p className="page-subtitle">Clientes contemplados, documentação e próximos passos.</p>
+          <h1 className="page-title">CLIENTES CONTEMPLADOS</h1>
+          <p className="page-subtitle">
+            A contemplação não encerra o relacionamento: acompanhe a documentação, a utilização da carta e a
+            pós-contemplação.
+          </p>
         </div>
+      </div>
+
+      <div className="stat-tiles-row">
+        {ETAPAS.map((e) => (
+          <StatTile key={e.key} icon={e.icon} label={e.label} value={contagem[e.key]} color={e.color} />
+        ))}
       </div>
 
       <div className="results-count">{clientes.length} CLIENTE(S)</div>
@@ -61,7 +112,7 @@ export default function ContempladosPage() {
             <div
               className="equipe-card"
               key={c.id}
-              style={{ cursor: 'pointer' }}
+              style={{ cursor: 'pointer', flexDirection: 'column', alignItems: 'stretch', gap: 10 }}
               onClick={() => {
                 setEditing(c)
                 setModalOpen(true)
@@ -76,9 +127,7 @@ export default function ContempladosPage() {
                   {' · '}{c.responsavel?.nome || 'Sem responsável'}
                 </div>
               </div>
-              <span className="badge badge-red">
-                {(c.status_documentacao || 'DOCUMENTAÇÃO PENDENTE').toUpperCase()}
-              </span>
+              <EtapaStepper etapaAtual={c.status_documentacao} />
             </div>
           ))
         )}

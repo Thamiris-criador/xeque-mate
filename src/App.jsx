@@ -12,6 +12,8 @@ import IndicacoesPage from './components/IndicacoesPage.jsx'
 import ContempladosPage from './components/ContempladosPage.jsx'
 import InadimplentesPage from './components/InadimplentesPage.jsx'
 import RelatorioSemanalPage from './components/RelatorioSemanalPage.jsx'
+import FinanceiroPage from './components/FinanceiroPage.jsx'
+import AniversariantesPage from './components/AniversariantesPage.jsx'
 import PlaceholderPage from './components/PlaceholderPage.jsx'
 import LoginPage from './components/LoginPage.jsx'
 import './App.css'
@@ -84,6 +86,10 @@ export default function App() {
             <InadimplentesPage />
           ) : page === 'relatorio-semanal' ? (
             <RelatorioSemanalPage />
+          ) : page === 'financeiro' ? (
+            <FinanceiroPage />
+          ) : page === 'aniversariantes' ? (
+            <AniversariantesPage />
           ) : (
             <PlaceholderPage title={PAGE_TITLES[page]} />
           )}

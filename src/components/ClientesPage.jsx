@@ -1,15 +1,34 @@
 import { useEffect, useMemo, useState, useCallback } from 'react'
-import { Plus, Eye, Upload } from 'lucide-react'
+import { Plus, Eye, FileText, KeyRound, CheckCircle2 } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import ClientModal from './ClientModal.jsx'
-import ImportModal from './ImportModal.jsx'
 import './ClientesPage.css'
+import './Dashboard.css'
+
+const ETAPAS_CONTEMPLACAO = [
+  { key: 'documentacao', label: 'Em documentação', icon: FileText, color: 'var(--orange)' },
+  { key: 'carta_liberada', label: 'Carta liberada para uso', icon: KeyRound, color: 'var(--blue)' },
+  { key: 'concluido', label: 'Processo concluído', icon: CheckCircle2, color: 'var(--green)' },
+]
+
+function StatTile({ icon: Icon, label, value, color }) {
+  return (
+    <div className="stat-tile">
+      <div className="stat-tile-icon" style={{ color }}>
+        <Icon size={18} />
+      </div>
+      <div className="stat-tile-value">{value}</div>
+      <div className="stat-tile-label">{label}</div>
+    </div>
+  )
+}
 
 const TABS = [
-  { key: 'todos', label: 'Todos os clientes' },
-  { key: 'contemplados', label: 'Contemplados' },
-  { key: 'inadimplentes', label: 'Inadimplentes' },
-  { key: 'cancelados', label: 'Cancelados' },
+  { key: 'todos', label: 'Todos os clientes', color: 'var(--blue)' },
+  { key: 'em_dia', label: 'Em dia', color: 'var(--green)' },
+  { key: 'contemplados', label: 'Contemplados', color: 'var(--purple)' },
+  { key: 'inadimplentes', label: 'Inadimplentes', color: 'var(--red)' },
+  { key: 'cancelados', label: 'Cancelados', color: 'var(--gray-chart)' },
 ]
 
 const JORNADA_LABELS = {
@@ -21,7 +40,6 @@ const JORNADA_LABELS = {
 
 const FINANCEIRO_LABELS = {
   em_dia: 'Em dia',
-  atrasado: 'Atrasado',
   inadimplente: 'Inadimplente',
   acordo: 'Acordo',
   cancelado: 'Cancelado',
@@ -30,7 +48,6 @@ const FINANCEIRO_LABELS = {
 
 const FINANCEIRO_BADGE_CLASS = {
   em_dia: 'badge-green',
-  atrasado: 'badge-red',
   inadimplente: 'badge-red',
   acordo: 'badge-orange',
   cancelado: 'badge-neutral',
@@ -39,6 +56,28 @@ const FINANCEIRO_BADGE_CLASS = {
 
 function JornadaBadge({ value }) {
   return <span className="badge badge-neutral">{(JORNADA_LABELS[value] || value || '—').toUpperCase()}</span>
+}
+
+function EtapaContemplacaoStepper({ etapaAtual, onSelecionar }) {
+  const indiceAtual = ETAPAS_CONTEMPLACAO.findIndex((e) => e.key === (etapaAtual || 'documentacao'))
+  return (
+    <div className="etapa-stepper">
+      {ETAPAS_CONTEMPLACAO.map((e, i) => (
+        <button
+          key={e.key}
+          type="button"
+          className={`etapa-step${i <= indiceAtual ? ' done' : ''}${i === indiceAtual ? ' current' : ''}`}
+          title={e.label}
+          onClick={(ev) => {
+            ev.stopPropagation()
+            onSelecionar(e.key)
+          }}
+        >
+          {e.label}
+        </button>
+      ))}
+    </div>
+  )
 }
 
 function FinanceiroBadge({ value }) {
@@ -61,7 +100,6 @@ export default function ClientesPage() {
   const [error, setError] = useState(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [editingClient, setEditingClient] = useState(null)
-  const [importOpen, setImportOpen] = useState(false)
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -93,8 +131,27 @@ export default function ClientesPage() {
   const vendedores = useMemo(() => responsaveis.filter((r) => r.area === 'Comercial'), [responsaveis])
   const responsaveisPosVendas = useMemo(() => responsaveis.filter((r) => r.area === 'Pós-Vendas'), [responsaveis])
 
+  const contagemEtapaContemplacao = useMemo(() => {
+    const c = { documentacao: 0, carta_liberada: 0, concluido: 0 }
+    for (const cliente of clientes) {
+      if (cliente.jornada !== 'contemplado') continue
+      const etapa = cliente.status_documentacao || 'documentacao'
+      if (c[etapa] !== undefined) c[etapa] += 1
+    }
+    return c
+  }, [clientes])
+
+  const contagemPorTab = useMemo(() => ({
+    todos: clientes.length,
+    em_dia: clientes.filter((c) => c.financeiro_status === 'em_dia').length,
+    contemplados: clientes.filter((c) => c.jornada === 'contemplado').length,
+    inadimplentes: clientes.filter((c) => c.financeiro_status === 'inadimplente').length,
+    cancelados: clientes.filter((c) => c.financeiro_status === 'cancelado').length,
+  }), [clientes])
+
   const filtered = useMemo(() => {
     return clientes.filter((c) => {
+      if (tab === 'em_dia' && c.financeiro_status !== 'em_dia') return false
       if (tab === 'contemplados' && c.jornada !== 'contemplado') return false
       if (tab === 'inadimplentes' && c.financeiro_status !== 'inadimplente') return false
       if (tab === 'cancelados' && c.financeiro_status !== 'cancelado') return false
@@ -113,6 +170,21 @@ export default function ClientesPage() {
       return true
     })
   }, [clientes, tab, responsavelFiltro, search])
+
+  async function handleAtualizarEtapa(clienteId, novaEtapa) {
+    const anterior = clientes
+    setClientes((cs) => cs.map((c) => (c.id === clienteId ? { ...c, status_documentacao: novaEtapa } : c)))
+
+    const { error: updateError } = await supabase
+      .from('clientes')
+      .update({ status_documentacao: novaEtapa })
+      .eq('id', clienteId)
+
+    if (updateError) {
+      setClientes(anterior)
+      setError(updateError.message)
+    }
+  }
 
   function handleEdit(client) {
     setEditingClient(client)
@@ -134,30 +206,40 @@ export default function ClientesPage() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
-          <button
-            className="btn-secondary"
-            style={{ display: 'flex', alignItems: 'center', gap: 8 }}
-            onClick={() => setImportOpen(true)}
-          >
-            <Upload size={16} /> Importar clientes
-          </button>
           <button className="btn-primary" onClick={handleNew}>
             <Plus size={16} /> Cadastrar cliente
           </button>
         </div>
       </div>
 
-      <div className="tabs">
+      <div className="status-chips">
         {TABS.map((t) => (
           <button
             key={t.key}
-            className={`tab${tab === t.key ? ' active' : ''}`}
+            className={`status-chip${tab === t.key ? ' active' : ''}`}
+            style={{ '--chip-color': t.color }}
             onClick={() => setTab(t.key)}
           >
+            <span className="status-chip-dot" />
             {t.label}
+            <span className="status-chip-count">{contagemPorTab[t.key]}</span>
           </button>
         ))}
       </div>
+
+      {tab === 'contemplados' && (
+        <>
+          <p className="page-subtitle" style={{ marginBottom: 16 }}>
+            A contemplação não encerra o relacionamento: acompanhe a documentação, a utilização da carta e a
+            pós-contemplação.
+          </p>
+          <div className="stat-tiles-row" style={{ marginBottom: 16 }}>
+            {ETAPAS_CONTEMPLACAO.map((e) => (
+              <StatTile key={e.key} icon={e.icon} label={e.label} value={contagemEtapaContemplacao[e.key]} color={e.color} />
+            ))}
+          </div>
+        </>
+      )}
 
       <div className="filters-row">
         <input
@@ -166,8 +248,12 @@ export default function ClientesPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <select className="filter-select" disabled>
-          <option>Todos os clientes</option>
+        <select className="filter-select" value={tab} onChange={(e) => setTab(e.target.value)}>
+          {TABS.map((t) => (
+            <option key={t.key} value={t.key}>
+              {t.label}
+            </option>
+          ))}
         </select>
         <select
           className="filter-select"
@@ -220,7 +306,14 @@ export default function ClientesPage() {
               </div>
               <div>{c.responsavel?.nome || '—'}</div>
               <div>
-                <JornadaBadge value={c.jornada} />
+                {c.jornada === 'contemplado' ? (
+                  <EtapaContemplacaoStepper
+                    etapaAtual={c.status_documentacao}
+                    onSelecionar={(etapa) => handleAtualizarEtapa(c.id, etapa)}
+                  />
+                ) : (
+                  <JornadaBadge value={c.jornada} />
+                )}
               </div>
               <div>
                 <FinanceiroBadge value={c.financeiro_status} />
@@ -245,16 +338,6 @@ export default function ClientesPage() {
           }}
           onDeleted={() => {
             setModalOpen(false)
-            loadData()
-          }}
-        />
-      )}
-
-      {importOpen && (
-        <ImportModal
-          onClose={() => setImportOpen(false)}
-          onFinished={() => {
-            setImportOpen(false)
             loadData()
           }}
         />

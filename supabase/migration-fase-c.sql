@@ -54,33 +54,33 @@ create trigger trg_clientes_after_update_cancelamento
   for each row execute function trg_cliente_cancelamento();
 
 -- ============================================================
--- 3. Lembrete de boleto — roda todo dia, cria tarefa 1 dia antes do vencimento
+-- 3. Lembrete de boleto — roda todo dia, cria tarefa 5 dias antes do vencimento
 --    (vencimentos: 10, 15, 20, 21). Não duplica se já existir tarefa igual no dia.
---    Responsável: quem tiver "suporte" no cargo dentro da área Pós-Vendas (hoje é o Gabriel);
---    se ninguém tiver, cai no responsável do próprio cliente.
+--    Responsável: sempre o Gabriel (só ele recebe esse tipo de tarefa).
 -- ============================================================
 
 create or replace function gerar_tarefas_boleto()
 returns void as $$
 declare
-  v_data date := current_date + 1;
+  v_data date := current_date + 5;
   v_dia smallint := extract(day from v_data);
-  v_suporte_id bigint;
+  v_gabriel_id bigint;
 begin
   if v_dia not in (10, 15, 20, 21) then
     return;
   end if;
 
-  select id into v_suporte_id from equipe
-    where area = 'Pós-Vendas' and cargo ilike '%suporte%'
-    limit 1;
+  select id into v_gabriel_id from equipe where nome = 'Gabriel' limit 1;
+  if v_gabriel_id is null then
+    return;
+  end if;
 
   insert into tarefas (cliente_id, titulo, descricao, responsavel_id, data, prioridade, status, categoria)
   select
     c.id,
     'Lembrete de boleto',
-    'Enviar lembrete de boleto ao cliente (vencimento dia ' || v_dia || ').',
-    coalesce(v_suporte_id, c.responsavel_id),
+    'Enviar lembrete de boleto ao cliente (vencimento em 5 dias, dia ' || v_dia || ').',
+    v_gabriel_id,
     v_data,
     'amarelo',
     'pendente',

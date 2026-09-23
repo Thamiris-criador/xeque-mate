@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
-  Users, CheckCircle2, Clock, AlertTriangle, XCircle, Award,
+  Users, CheckCircle2, AlertTriangle, XCircle, Award,
   PhoneCall, ListTodo, CalendarClock, Undo2, RotateCcw, Share2,
   UserCheck, CalendarCheck, Gauge, HelpCircle,
 } from 'lucide-react'
@@ -17,11 +17,10 @@ import { supabase } from '../lib/supabase.js'
 import { getPeriodoRange, dentroDoPeriodo, PERIODO_LABELS, formatarData, PRIORIDADE_COLOR } from '../lib/negocio.js'
 import './Dashboard.css'
 
-const STATUS_ORDER = ['em_dia', 'atrasado', 'inadimplente', 'cancelado']
+const STATUS_ORDER = ['em_dia', 'inadimplente', 'cancelado']
 
 const STATUS_META = {
   em_dia: { label: 'Em dia', color: 'var(--green)' },
-  atrasado: { label: 'Atrasado', color: 'var(--orange)' },
   inadimplente: { label: 'Inadimplente', color: 'var(--red)' },
   cancelado: { label: 'Cancelado', color: 'var(--gray-chart)' },
 }
@@ -98,7 +97,7 @@ export default function Dashboard() {
   }, [])
 
   const totals = useMemo(() => {
-    const byStatus = { em_dia: 0, atrasado: 0, inadimplente: 0, cancelado: 0 }
+    const byStatus = { em_dia: 0, inadimplente: 0, cancelado: 0 }
     for (const c of clientes) {
       if (byStatus[c.financeiro_status] !== undefined) byStatus[c.financeiro_status] += 1
     }
@@ -112,7 +111,6 @@ export default function Dashboard() {
 
     const novosClientes = clientes.filter((c) => dentroDoPeriodo(c.created_at, periodo)).length
     const clientesContatados = clientes.filter((c) => dentroDoPeriodo(c.ultimo_contato, periodo)).length
-    const emAtraso = clientes.filter((c) => c.financeiro_status === 'atrasado').length
     const inadimplentes = clientes.filter((c) => c.financeiro_status === 'inadimplente').length
     const contempladosPeriodo = clientes.filter((c) => dentroDoPeriodo(c.data_contemplacao, periodo)).length
     const proximasAssembleias = clientes.filter((c) => {
@@ -144,7 +142,7 @@ export default function Dashboard() {
       .slice(0, 15)
 
     return {
-      novosClientes, clientesContatados, emAtraso, inadimplentes, contempladosPeriodo, proximasAssembleias,
+      novosClientes, clientesContatados, inadimplentes, contempladosPeriodo, proximasAssembleias,
       clientesComPendencia, pendenciasResolvidas, tarefasHoje, tarefasAtrasadas,
       cancelamentos, emReversao, reversoesConfirmadas,
       indicacoesSolicitadas, indicacoesRecebidas,
@@ -159,12 +157,12 @@ export default function Dashboard() {
     for (const c of clientes) {
       const nome = c.responsavel?.nome || 'Sem responsável'
       if (!map.has(nome)) {
-        map.set(nome, { nome, em_dia: 0, atrasado: 0, inadimplente: 0, cancelado: 0 })
+        map.set(nome, { nome, em_dia: 0, inadimplente: 0, cancelado: 0 })
       }
       const row = map.get(nome)
       if (row[c.financeiro_status] !== undefined) row[c.financeiro_status] += 1
     }
-    return Array.from(map.values()).sort((a, b) => b.em_dia + b.atrasado + b.inadimplente + b.cancelado - (a.em_dia + a.atrasado + a.inadimplente + a.cancelado))
+    return Array.from(map.values()).sort((a, b) => b.em_dia + b.inadimplente + b.cancelado - (a.em_dia + a.inadimplente + a.cancelado))
   }, [clientes])
 
   return (
@@ -198,7 +196,6 @@ export default function Dashboard() {
           <div className="stat-tiles-row">
             <StatTile icon={Users} label="Novos clientes" value={metrics.novosClientes} color="var(--blue)" />
             <StatTile icon={PhoneCall} label="Clientes contatados" value={metrics.clientesContatados} color="var(--green)" />
-            <StatTile icon={Clock} label="Clientes em atraso" value={metrics.emAtraso} color="var(--orange)" />
             <StatTile icon={AlertTriangle} label="Clientes inadimplentes" value={metrics.inadimplentes} color="var(--red)" />
             <StatTile icon={XCircle} label="Cancelamentos" value={metrics.cancelamentos} color="var(--red)" />
             <StatTile icon={Award} label="Clientes contemplados" value={metrics.contempladosPeriodo} color="var(--red)" />

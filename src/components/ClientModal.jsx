@@ -2,18 +2,13 @@ import { useEffect, useState } from 'react'
 import { X, Trash2, Plus } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import TarefaModal from './TarefaModal.jsx'
-import ReversaoModal from './ReversaoModal.jsx'
-import IndicacaoModal from './IndicacaoModal.jsx'
 import {
   calcularDiasAtraso,
   proximoDiaUtil,
   formatarData,
   PRIORIDADE_COLOR,
   TAREFA_STATUS_LABELS,
-  REVERSAO_STATUS_LABELS,
-  REVERSAO_BADGE_CLASS,
-  INDICACAO_STATUS_LABELS,
-  INDICACAO_BADGE_CLASS,
+  BRINDES_OPCOES,
 } from '../lib/negocio.js'
 import './ClientModal.css'
 
@@ -22,11 +17,9 @@ const TABS = [
   { key: 'comercial', label: 'Dados comerciais' },
   { key: 'consorcio', label: 'Dados do consórcio' },
   { key: 'financeiro', label: 'Status financeiro' },
-  { key: 'acompanhamento', label: 'Acompanhamento' },
+  { key: 'acompanhamento', label: 'Onboarding' },
   { key: 'contemplacao', label: 'Contemplação' },
   { key: 'tarefas', label: 'Tarefas', requerEdit: true },
-  { key: 'reversao', label: 'Reversão', requerEdit: true },
-  { key: 'indicacoes', label: 'Indicações', requerEdit: true },
   { key: 'historico', label: 'Histórico', requerEdit: true },
 ]
 
@@ -45,6 +38,8 @@ export default function ClientModal({ client, responsaveisPosVendas, vendedores,
     estado: client?.estado || '',
     endereco: client?.endereco || '',
     obs_cliente: client?.obs_cliente || '',
+    brindes_prometidos: client?.brindes_prometidos || [],
+    brindes_data: client?.brindes_data || '',
 
     vendedor_id: client?.vendedor_id || '',
     data_venda: client?.data_venda || '',
@@ -89,7 +84,7 @@ export default function ClientModal({ client, responsaveisPosVendas, vendedores,
     data_contemplacao: client?.data_contemplacao || '',
     tipo_contemplacao: client?.tipo_contemplacao || '',
     contemplacao_forma: client?.contemplacao_forma || '',
-    status_documentacao: client?.status_documentacao || '',
+    status_documentacao: client?.status_documentacao || 'documentacao',
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
@@ -98,20 +93,21 @@ export default function ClientModal({ client, responsaveisPosVendas, vendedores,
   const [tarefaModalOpen, setTarefaModalOpen] = useState(false)
   const [editingTarefa, setEditingTarefa] = useState(null)
 
-  const [reversoesCliente, setReversoesCliente] = useState([])
-  const [reversaoModalOpen, setReversaoModalOpen] = useState(false)
-  const [editingReversao, setEditingReversao] = useState(null)
-
-  const [indicacoesCliente, setIndicacoesCliente] = useState([])
-  const [indicacaoModalOpen, setIndicacaoModalOpen] = useState(false)
-  const [editingIndicacao, setEditingIndicacao] = useState(null)
-
   const [historico, setHistorico] = useState([])
   const [novaObservacao, setNovaObservacao] = useState('')
   const [savingObs, setSavingObs] = useState(false)
 
   function update(field, value) {
     setForm((f) => ({ ...f, [field]: value }))
+  }
+
+  function toggleBrinde(key) {
+    setForm((f) => ({
+      ...f,
+      brindes_prometidos: f.brindes_prometidos.includes(key)
+        ? f.brindes_prometidos.filter((b) => b !== key)
+        : [...f.brindes_prometidos, key],
+    }))
   }
 
   function loadTarefas() {
@@ -122,26 +118,6 @@ export default function ClientModal({ client, responsaveisPosVendas, vendedores,
       .eq('cliente_id', client.id)
       .order('data', { ascending: true })
       .then(({ data }) => setTarefas(data || []))
-  }
-
-  function loadReversoes() {
-    if (!isEdit) return
-    supabase
-      .from('reversoes')
-      .select('*, responsavel:equipe(id, nome)')
-      .eq('cliente_id', client.id)
-      .order('created_at', { ascending: false })
-      .then(({ data }) => setReversoesCliente(data || []))
-  }
-
-  function loadIndicacoes() {
-    if (!isEdit) return
-    supabase
-      .from('indicacoes')
-      .select('*, responsavel:equipe(id, nome)')
-      .eq('cliente_id', client.id)
-      .order('created_at', { ascending: false })
-      .then(({ data }) => setIndicacoesCliente(data || []))
   }
 
   function loadHistorico() {
@@ -156,8 +132,6 @@ export default function ClientModal({ client, responsaveisPosVendas, vendedores,
 
   useEffect(() => {
     if (tab === 'tarefas') loadTarefas()
-    if (tab === 'reversao') loadReversoes()
-    if (tab === 'indicacoes') loadIndicacoes()
     if (tab === 'historico') loadHistorico()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab])
@@ -187,6 +161,8 @@ export default function ClientModal({ client, responsaveisPosVendas, vendedores,
       estado: form.estado.trim() || null,
       endereco: form.endereco.trim() || null,
       obs_cliente: form.obs_cliente.trim() || null,
+      brindes_prometidos: form.brindes_prometidos,
+      brindes_data: form.brindes_data || null,
       vendedor_id: form.vendedor_id || null,
       data_venda: form.data_venda || null,
       origem_cliente: form.origem_cliente.trim() || null,
@@ -362,6 +338,25 @@ export default function ClientModal({ client, responsaveisPosVendas, vendedores,
                 <input value={form.endereco} onChange={(e) => update('endereco', e.target.value)} />
               </label>
               <label>
+                Brindes prometidos ao cliente
+                <div className="etapa-stepper">
+                  {BRINDES_OPCOES.map((b) => (
+                    <button
+                      key={b.key}
+                      type="button"
+                      className={`etapa-step${form.brindes_prometidos.includes(b.key) ? ' current' : ''}`}
+                      onClick={() => toggleBrinde(b.key)}
+                    >
+                      {b.label}
+                    </button>
+                  ))}
+                </div>
+              </label>
+              <label>
+                Data combinada
+                <input type="date" value={form.brindes_data} onChange={(e) => update('brindes_data', e.target.value)} />
+              </label>
+              <label>
                 Observações
                 <input value={form.obs_cliente} onChange={(e) => update('obs_cliente', e.target.value)} />
               </label>
@@ -494,7 +489,6 @@ export default function ClientModal({ client, responsaveisPosVendas, vendedores,
                 Status financeiro
                 <select value={form.financeiro_status} onChange={(e) => update('financeiro_status', e.target.value)}>
                   <option value="em_dia">Em dia</option>
-                  <option value="atrasado">Em atraso</option>
                   <option value="inadimplente">Inadimplente</option>
                   <option value="acordo">Acordo</option>
                   <option value="cancelado">Cancelado</option>
@@ -556,7 +550,7 @@ export default function ClientModal({ client, responsaveisPosVendas, vendedores,
           {tab === 'acompanhamento' && (
             <>
               <label>
-                Responsável pelo pós-vendas
+                Responsável pelo onboarding
                 <select value={form.responsavel_id} onChange={(e) => update('responsavel_id', e.target.value)}>
                   <option value="">Sem responsável</option>
                   {responsaveisPosVendas.map((r) => (
@@ -659,12 +653,16 @@ export default function ClientModal({ client, responsaveisPosVendas, vendedores,
                   </select>
                 </label>
                 <label>
-                  Status da documentação
-                  <input value={form.status_documentacao} onChange={(e) => update('status_documentacao', e.target.value)} />
+                  Etapa da pós-contemplação
+                  <select value={form.status_documentacao} onChange={(e) => update('status_documentacao', e.target.value)}>
+                    <option value="documentacao">Em documentação</option>
+                    <option value="carta_liberada">Carta liberada para uso</option>
+                    <option value="concluido">Processo concluído</option>
+                  </select>
                 </label>
               </div>
               <div className="modal-hint">
-                Crédito, modelo/moto e responsável já estão nas abas Comercial e Acompanhamento. Marque o Status
+                Crédito, modelo/moto e responsável já estão nas abas Comercial e Onboarding. Marque o Status
                 financeiro como "Contemplado" na aba Financeiro para sinalizar o cliente no sistema.
               </div>
             </>
@@ -713,88 +711,6 @@ export default function ClientModal({ client, responsaveisPosVendas, vendedores,
             </div>
           )}
 
-          {tab === 'reversao' && isEdit && (
-            <div className="modal-subtab-content">
-              <button
-                type="button"
-                className="btn-secondary modal-subtab-add"
-                onClick={() => {
-                  setEditingReversao(null)
-                  setReversaoModalOpen(true)
-                }}
-              >
-                <Plus size={14} /> Nova reversão
-              </button>
-
-              {reversoesCliente.length === 0 ? (
-                <div className="table-empty">Nenhum registro de reversão para este cliente.</div>
-              ) : (
-                <div className="historico-list">
-                  {reversoesCliente.map((r) => (
-                    <div
-                      className="historico-item"
-                      key={r.id}
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => {
-                        setEditingReversao(r)
-                        setReversaoModalOpen(true)
-                      }}
-                    >
-                      <div className="historico-data">{formatarData(r.data_pedido)}</div>
-                      <div className="historico-descricao">
-                        {r.motivo_cancelamento || 'Sem motivo registrado'}{' '}
-                        <span className={`badge ${REVERSAO_BADGE_CLASS[r.status] || 'badge-neutral'}`}>
-                          {(REVERSAO_STATUS_LABELS[r.status] || r.status).toUpperCase()}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {tab === 'indicacoes' && isEdit && (
-            <div className="modal-subtab-content">
-              <button
-                type="button"
-                className="btn-secondary modal-subtab-add"
-                onClick={() => {
-                  setEditingIndicacao(null)
-                  setIndicacaoModalOpen(true)
-                }}
-              >
-                <Plus size={14} /> Solicitar indicação
-              </button>
-
-              {indicacoesCliente.length === 0 ? (
-                <div className="table-empty">Nenhuma indicação registrada para este cliente.</div>
-              ) : (
-                <div className="historico-list">
-                  {indicacoesCliente.map((i) => (
-                    <div
-                      className="historico-item"
-                      key={i.id}
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => {
-                        setEditingIndicacao(i)
-                        setIndicacaoModalOpen(true)
-                      }}
-                    >
-                      <div className="historico-data">{formatarData(i.data_pedido)}</div>
-                      <div className="historico-descricao">
-                        {i.pessoa_indicada}{' '}
-                        <span className={`badge ${INDICACAO_BADGE_CLASS[i.status] || 'badge-neutral'}`}>
-                          {(INDICACAO_STATUS_LABELS[i.status] || i.status).toUpperCase()}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
           {tab === 'historico' && isEdit && (
             <div className="modal-subtab-content">
               <div className="modal-form-row modal-obs-add">
@@ -828,7 +744,7 @@ export default function ClientModal({ client, responsaveisPosVendas, vendedores,
 
           {error && <div className="modal-error">{error}</div>}
 
-          {!['tarefas', 'reversao', 'indicacoes', 'historico'].includes(tab) && (
+          {!['tarefas', 'historico'].includes(tab) && (
             <div className="modal-actions">
               <button type="button" className="btn-secondary" onClick={onClose}>
                 Cancelar
@@ -859,41 +775,6 @@ export default function ClientModal({ client, responsaveisPosVendas, vendedores,
         />
       )}
 
-      {reversaoModalOpen && (
-        <ReversaoModal
-          reversao={editingReversao}
-          clientes={[]}
-          responsaveis={responsaveisPosVendas}
-          presetClienteId={client.id}
-          onClose={() => setReversaoModalOpen(false)}
-          onSaved={() => {
-            setReversaoModalOpen(false)
-            loadReversoes()
-          }}
-          onDeleted={() => {
-            setReversaoModalOpen(false)
-            loadReversoes()
-          }}
-        />
-      )}
-
-      {indicacaoModalOpen && (
-        <IndicacaoModal
-          indicacao={editingIndicacao}
-          clientes={[]}
-          responsaveis={responsaveisPosVendas}
-          presetClienteId={client.id}
-          onClose={() => setIndicacaoModalOpen(false)}
-          onSaved={() => {
-            setIndicacaoModalOpen(false)
-            loadIndicacoes()
-          }}
-          onDeleted={() => {
-            setIndicacaoModalOpen(false)
-            loadIndicacoes()
-          }}
-        />
-      )}
     </div>
   )
 }

@@ -82,6 +82,23 @@ alter table clientes add constraint clientes_financeiro_status_check
 create table if not exists tarefas (
   id bigint generated always as identity primary key
 );
+-- Remove qualquer coluna estranha (ex: "prazo" NOT NULL) que tenha sobrado de uma
+-- criação anterior da tabela por outro meio (Table Editor), antes de montar o schema certo.
+do $$
+declare
+  col record;
+begin
+  for col in
+    select column_name from information_schema.columns
+    where table_name = 'tarefas' and table_schema = 'public'
+      and column_name not in (
+        'id', 'cliente_id', 'titulo', 'descricao', 'responsavel_id', 'data', 'horario',
+        'prioridade', 'status', 'categoria', 'data_conclusao', 'observacao', 'created_at', 'updated_at'
+      )
+  loop
+    execute format('alter table tarefas drop column %I', col.column_name);
+  end loop;
+end $$;
 -- Se cliente_id/responsavel_id já existiam com tipo errado (ex: uuid, de uma
 -- criação anterior via Table Editor), derruba pra recriar certo com ADD COLUMN abaixo.
 do $$
@@ -129,6 +146,20 @@ create table if not exists historico (
   id bigint generated always as identity primary key
 );
 do $$
+declare
+  col record;
+begin
+  for col in
+    select column_name from information_schema.columns
+    where table_name = 'historico' and table_schema = 'public'
+      and column_name not in (
+        'id', 'cliente_id', 'tipo', 'descricao', 'campo', 'valor_anterior', 'valor_novo', 'usuario', 'created_at'
+      )
+  loop
+    execute format('alter table historico drop column %I', col.column_name);
+  end loop;
+end $$;
+do $$
 begin
   if exists (select 1 from information_schema.columns where table_name = 'historico' and column_name = 'cliente_id' and data_type <> 'bigint') then
     alter table historico drop column cliente_id;
@@ -151,6 +182,22 @@ create index if not exists idx_historico_cliente on historico(cliente_id);
 create table if not exists reversoes (
   id bigint generated always as identity primary key
 );
+do $$
+declare
+  col record;
+begin
+  for col in
+    select column_name from information_schema.columns
+    where table_name = 'reversoes' and table_schema = 'public'
+      and column_name not in (
+        'id', 'cliente_id', 'responsavel_id', 'motivo_cancelamento', 'data_pedido', 'data_contato',
+        'status', 'estrategia', 'resultado', 'observacoes', 'data_reversao', 'comprovante',
+        'valor_bonificacao', 'created_at'
+      )
+  loop
+    execute format('alter table reversoes drop column %I', col.column_name);
+  end loop;
+end $$;
 do $$
 begin
   if exists (select 1 from information_schema.columns where table_name = 'reversoes' and column_name = 'cliente_id' and data_type <> 'bigint') then
@@ -191,6 +238,21 @@ create index if not exists idx_reversoes_cliente on reversoes(cliente_id);
 create table if not exists indicacoes (
   id bigint generated always as identity primary key
 );
+do $$
+declare
+  col record;
+begin
+  for col in
+    select column_name from information_schema.columns
+    where table_name = 'indicacoes' and table_schema = 'public'
+      and column_name not in (
+        'id', 'cliente_id', 'data_pedido', 'pessoa_indicada', 'telefone_indicacao',
+        'status', 'responsavel_id', 'observacoes', 'created_at'
+      )
+  loop
+    execute format('alter table indicacoes drop column %I', col.column_name);
+  end loop;
+end $$;
 do $$
 begin
   if exists (select 1 from information_schema.columns where table_name = 'indicacoes' and column_name = 'cliente_id' and data_type <> 'bigint') then

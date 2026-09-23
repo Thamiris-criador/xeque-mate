@@ -20,8 +20,8 @@ const CAMPOS = [
 const STATUS_ALIASES = {
   'em dia': 'em_dia',
   em_dia: 'em_dia',
-  atrasado: 'atrasado',
-  'em atraso': 'atrasado',
+  atrasado: 'inadimplente',
+  'em atraso': 'inadimplente',
   inadimplente: 'inadimplente',
   acordo: 'acordo',
   cancelado: 'cancelado',

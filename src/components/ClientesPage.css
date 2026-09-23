@@ -61,6 +61,46 @@
   border-color: var(--green);
 }
 
+.status-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.status-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-chip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--chip-color);
+  flex-shrink: 0;
+}
+
+.status-chip-count {
+  font-weight: 800;
+  color: var(--text);
+}
+
+.status-chip.active {
+  border-color: var(--chip-color);
+  color: var(--text);
+  background: var(--bg-hover);
+}
+
 .filters-row {
   display: flex;
   gap: 12px;

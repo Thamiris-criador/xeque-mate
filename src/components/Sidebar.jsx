@@ -16,8 +16,6 @@ import './Sidebar.css'
 
 const CLIENTES_CHILDREN = [
   { key: 'clientes', label: 'Todos os clientes' },
-  { key: 'contemplados', label: 'Contemplados' },
-  { key: 'inadimplentes', label: 'Inadimplentes' },
   { key: 'reversao', label: 'Reversão' },
   { key: 'indicacoes', label: 'Indicações' },
 ]

@@ -85,3 +85,38 @@
   border-color: var(--green);
   max-width: 320px;
 }
+
+.etapa-stepper {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.etapa-step {
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.etapa-step.done {
+  color: var(--text);
+  border-color: var(--green);
+}
+
+.etapa-step.current {
+  background: var(--green);
+  color: #0b0b0c;
+  border-color: var(--green);
+}
+
+.etapa-step:hover {
+  border-color: var(--green);
+}

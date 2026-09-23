@@ -64,7 +64,7 @@ export default function RelatorioSemanalPage() {
   const resumo = useMemo(() => {
     const novosClientes = clientesFiltrados.filter((c) => dentroDoPeriodo(c.created_at, periodo)).length
     const contatos = clientesFiltrados.filter((c) => dentroDoPeriodo(c.ultimo_contato, periodo)).length
-    const emAtraso = clientesFiltrados.filter((c) => c.financeiro_status === 'atrasado' || c.financeiro_status === 'inadimplente').length
+    const emAtraso = clientesFiltrados.filter((c) => c.financeiro_status === 'inadimplente').length
     const acordos = clientesFiltrados.filter((c) => c.financeiro_status === 'acordo').length
     const promessas = clientesFiltrados.filter((c) => dentroDoPeriodo(c.data_promessa, periodo)).length
     const contempladas = clientesFiltrados.filter((c) => dentroDoPeriodo(c.data_contemplacao, periodo)).length

@@ -90,6 +90,14 @@ export const INDICACAO_BADGE_CLASS = {
 
 export const VALOR_BONIFICACAO_REVERSAO = 50.0
 
+export const BRINDES_OPCOES = [
+  { key: 'pix', label: 'Pix' },
+  { key: 'parcela', label: 'Parcela' },
+  { key: 'moletom', label: 'Moletom' },
+  { key: 'emplacamento', label: 'Emplacamento' },
+  { key: 'chaveiro', label: 'Chaveiro' },
+]
+
 function inicioDoDia(data) {
   const d = new Date(data)
   d.setHours(0, 0, 0, 0)
