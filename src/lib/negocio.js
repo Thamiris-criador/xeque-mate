@@ -136,14 +136,6 @@ export const PERIODO_LABELS = {
   mes: 'Este mês',
 }
 
-export const NOTA_TIPOS = {
-  ocorrencia: 'Principais ocorrências',
-  problema: 'Problemas',
-  oportunidade: 'Oportunidades',
-  decisao: 'Decisões da gestão',
-  recomendacao: 'Recomendações',
-}
-
 export function classificarDataTarefa(dataStr) {
   const hoje = inicioDoDia(new Date())
   const data = inicioDoDia(new Date(dataStr + 'T00:00:00'))
@@ -158,3 +150,54 @@ export function classificarDataTarefa(dataStr) {
   if (data <= fimDaSemana) return 'semana'
   return 'futura'
 }
+
+// ---- Módulo Comercial (leads) ----
+
+export const CANAIS_ORIGEM = [
+  'Instagram', 'TikTok', 'WhatsApp', 'Redes sociais', 'Indicação',
+  'Site', 'Evento', 'Cliente antigo', 'Anúncio', 'Outro',
+]
+
+export const LEAD_STATUS_LABELS = {
+  novo: 'Novo',
+  em_contato: 'Em contato',
+  interessado: 'Interessado',
+  proposta_enviada: 'Proposta enviada',
+  em_negociacao: 'Em negociação',
+  follow_up: 'Follow-up',
+  aguardando_cliente: 'Aguardando cliente',
+  fechado: 'Fechado',
+  sem_interesse: 'Sem interesse',
+  sem_retorno: 'Sem retorno',
+  adiado: 'Adiado',
+  perdido: 'Perdido',
+}
+
+export const LEAD_STATUS_BADGE_CLASS = {
+  novo: 'badge-blue',
+  em_contato: 'badge-orange',
+  interessado: 'badge-orange',
+  proposta_enviada: 'badge-orange',
+  em_negociacao: 'badge-orange',
+  follow_up: 'badge-orange',
+  aguardando_cliente: 'badge-neutral',
+  fechado: 'badge-green',
+  sem_interesse: 'badge-neutral',
+  sem_retorno: 'badge-neutral',
+  adiado: 'badge-neutral',
+  perdido: 'badge-red',
+}
+
+export const LEAD_TEMPERATURA_LABELS = {
+  frio: 'Frio',
+  morno: 'Morno',
+  quente: 'Quente',
+}
+
+export const LEAD_TEMPERATURA_COLOR = {
+  frio: 'var(--blue)',
+  morno: 'var(--orange)',
+  quente: 'var(--red)',
+}
+
+export const TIPOS_CONTATO_LEAD = ['Ligação', 'WhatsApp', 'E-mail', 'Presencial', 'Outro']

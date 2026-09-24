@@ -1,0 +1,198 @@
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 1100px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.kpi-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+}
+
+.kpi-card-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.kpi-card-value {
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.kpi-card-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  margin-top: 4px;
+}
+
+.kpi-card-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.kpi-card.tint-green { background: rgba(163, 230, 53, 0.07); border-color: rgba(163, 230, 53, 0.25); }
+.kpi-card.tint-orange { background: rgba(224, 147, 47, 0.07); border-color: rgba(224, 147, 47, 0.25); }
+.kpi-card.tint-red { background: rgba(224, 90, 90, 0.07); border-color: rgba(224, 90, 90, 0.25); }
+.kpi-card.tint-gray { background: rgba(111, 111, 118, 0.07); border-color: rgba(111, 111, 118, 0.25); }
+
+.kpi-card-icon.tint-green { background: rgba(163, 230, 53, 0.18); color: var(--green); }
+.kpi-card-icon.tint-orange { background: rgba(224, 147, 47, 0.18); color: var(--orange); }
+.kpi-card-icon.tint-red { background: rgba(224, 90, 90, 0.18); color: var(--red); }
+.kpi-card-icon.tint-gray { background: rgba(111, 111, 118, 0.18); color: var(--gray-chart); }
+
+.comercial-layout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .comercial-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.leads-table-head,
+.leads-table-row {
+  display: grid;
+  grid-template-columns: 1.8fr 1.2fr 1fr 1fr 1fr 0.9fr;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 20px;
+}
+
+.leads-table-head {
+  background: var(--bg-sidebar);
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+.leads-table-row {
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.leads-table-row:hover {
+  background: var(--bg-hover);
+}
+
+.temperatura-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.temperatura-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.leads-acoes {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.leads-acao-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid var(--border);
+}
+
+.leads-acao-icon:hover {
+  color: var(--text);
+  background: var(--bg-hover);
+}
+
+.proximas-acoes-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.proximas-acoes-titulo {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.proxima-acao-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.proxima-acao-item:first-of-type {
+  border-top: none;
+}
+
+.proxima-acao-item:hover {
+  background: var(--bg-hover);
+}
+
+.proxima-acao-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+
+.proxima-acao-nome {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.proxima-acao-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.proxima-acao-data {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.proximas-acoes-mais {
+  width: 100%;
+  margin-top: 12px;
+  justify-content: center;
+}

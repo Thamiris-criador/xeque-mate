@@ -32,7 +32,7 @@ export default function TarefasPage() {
 
     const { data, error: fetchError } = await supabase
       .from('tarefas')
-      .select('*, cliente:clientes(id, nome), responsavel:equipe(id, nome)')
+      .select('*, cliente:clientes(id, nome), lead:leads(id, nome), responsavel:equipe(id, nome)')
       .order('data', { ascending: true })
 
     if (fetchError) {
@@ -126,7 +126,7 @@ export default function TarefasPage() {
               <div className="tarefa-info">
                 <div className="tarefa-titulo">{t.titulo}</div>
                 <div className="tarefa-meta">
-                  {t.cliente?.nome || 'Sem cliente'} · {t.responsavel?.nome || 'Sem responsável'} · {formatarData(t.data)}
+                  {t.lead ? `Lead: ${t.lead.nome}` : t.cliente?.nome || 'Sem cliente'} · {t.responsavel?.nome || 'Sem responsável'} · {formatarData(t.data)}
                   {t.horario && ` às ${t.horario.slice(0, 5)}`}
                 </div>
               </div>

@@ -5,10 +5,10 @@ import {
   Sparkles,
   ListChecks,
   UsersRound,
-  FileBarChart,
   Wallet,
   Cake,
-  Settings,
+  BookOpen,
+  Briefcase,
   ChevronDown,
   ChevronRight,
 } from 'lucide-react'
@@ -20,25 +20,39 @@ const CLIENTES_CHILDREN = [
   { key: 'indicacoes', label: 'Indicações' },
 ]
 
-const CLIENTES_KEYS = CLIENTES_CHILDREN.map((c) => c.key)
+const PLAYBOOK_CHILDREN = [
+  { key: 'playbook-comercial', label: 'Comercial' },
+  { key: 'playbook-pos-vendas', label: 'Pós-Vendas' },
+  { key: 'playbook-financeiro', label: 'Financeiro' },
+]
 
 const MENU = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { key: 'equipe', label: 'Equipe', icon: Users },
   { key: 'cultura', label: 'Cultura', icon: Sparkles },
-  { key: 'clientes-group', label: 'Clientes', icon: UsersRound, children: CLIENTES_CHILDREN },
+  { key: 'clientes-group', label: 'Clientes', icon: UsersRound, children: CLIENTES_CHILDREN, defaultKey: 'clientes' },
   { key: 'tarefas', label: 'Tarefas', icon: ListChecks },
+  { key: 'comercial', label: 'Comercial', icon: Briefcase },
   { key: 'financeiro', label: 'Financeiro', icon: Wallet },
   { key: 'aniversariantes', label: 'Aniversariantes', icon: Cake },
-  { key: 'relatorio-semanal', label: 'Relatório semanal', icon: FileBarChart },
-  { key: 'configuracoes', label: 'Configurações', icon: Settings },
+  { key: 'playbook-group', label: 'Playbook', icon: BookOpen, children: PLAYBOOK_CHILDREN, defaultKey: 'playbook-comercial' },
 ]
 
 export default function Sidebar({ current, onNavigate }) {
-  const [clientesAberto, setClientesAberto] = useState(CLIENTES_KEYS.includes(current))
+  const [abertos, setAbertos] = useState(() => {
+    const init = {}
+    for (const item of MENU) {
+      if (item.children) init[item.key] = item.children.some((c) => c.key === current)
+    }
+    return init
+  })
 
   useEffect(() => {
-    if (CLIENTES_KEYS.includes(current)) setClientesAberto(true)
+    for (const item of MENU) {
+      if (item.children && item.children.some((c) => c.key === current)) {
+        setAbertos((a) => ({ ...a, [item.key]: true }))
+      }
+    }
   }, [current])
 
   return (
@@ -53,25 +67,26 @@ export default function Sidebar({ current, onNavigate }) {
           const Icon = item.icon
 
           if (item.children) {
-            const filhoAtivo = CLIENTES_KEYS.includes(current)
+            const filhoAtivo = item.children.some((c) => c.key === current)
+            const aberto = Boolean(abertos[item.key])
             return (
               <div key={item.key}>
                 <button
                   className={`sidebar-item${filhoAtivo ? ' active' : ''}`}
                   onClick={() => {
-                    setClientesAberto((v) => !v)
-                    onNavigate('clientes')
+                    setAbertos((a) => ({ ...a, [item.key]: !a[item.key] }))
+                    onNavigate(item.defaultKey)
                   }}
                 >
                   <Icon size={18} strokeWidth={1.8} />
                   <span>{item.label}</span>
-                  {clientesAberto ? (
+                  {aberto ? (
                     <ChevronDown size={14} className="sidebar-chevron" />
                   ) : (
                     <ChevronRight size={14} className="sidebar-chevron" />
                   )}
                 </button>
-                {clientesAberto && (
+                {aberto && (
                   <div className="sidebar-submenu">
                     {item.children.map((child) => (
                       <button

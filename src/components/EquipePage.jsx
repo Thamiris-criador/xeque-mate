@@ -27,11 +27,15 @@ const AREAS = [
   },
 ]
 
-function MemberCard({ m }) {
+function MemberCard({ m, onClick }) {
   return (
-    <div className="equipe-card" key={m.id}>
-      <div className="equipe-avatar">
-        <UserRound size={18} />
+    <div className="equipe-card" key={m.id} style={{ cursor: 'pointer' }} onClick={() => onClick(m)}>
+      <div className="equipe-avatar" style={{ overflow: 'hidden' }}>
+        {m.foto_url ? (
+          <img src={m.foto_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        ) : (
+          <UserRound size={18} />
+        )}
       </div>
       <div className="equipe-info">
         <div className="equipe-nome">{m.nome}</div>
@@ -47,6 +51,7 @@ export default function EquipePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [modalOpen, setModalOpen] = useState(false)
+  const [editingMembro, setEditingMembro] = useState(null)
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -73,6 +78,16 @@ export default function EquipePage() {
   const lideranca = equipe.filter((m) => m.area === 'Liderança')
   const semArea = equipe.filter((m) => !m.area)
 
+  function handleEdit(membro) {
+    setEditingMembro(membro)
+    setModalOpen(true)
+  }
+
+  function handleNovo() {
+    setEditingMembro(null)
+    setModalOpen(true)
+  }
+
   return (
     <div>
       <div className="page-header">
@@ -83,7 +98,7 @@ export default function EquipePage() {
             contribui para a jornada dos nossos clientes.
           </p>
         </div>
-        <button className="btn-primary" onClick={() => setModalOpen(true)}>
+        <button className="btn-primary" onClick={handleNovo}>
           <Plus size={16} /> Novo usuário
         </button>
       </div>
@@ -104,7 +119,7 @@ export default function EquipePage() {
               </div>
               <div className="equipe-list equipe-list-lideranca">
                 {lideranca.map((m) => (
-                  <MemberCard m={m} key={m.id} />
+                  <MemberCard m={m} key={m.id} onClick={handleEdit} />
                 ))}
               </div>
             </div>
@@ -122,7 +137,7 @@ export default function EquipePage() {
                 {membros.length > 0 ? (
                   <div className="equipe-list">
                     {membros.map((m) => (
-                      <MemberCard m={m} key={m.id} />
+                      <MemberCard m={m} key={m.id} onClick={handleEdit} />
                     ))}
                   </div>
                 ) : (
@@ -139,7 +154,7 @@ export default function EquipePage() {
               </div>
               <div className="equipe-list">
                 {semArea.map((m) => (
-                  <MemberCard m={m} key={m.id} />
+                  <MemberCard m={m} key={m.id} onClick={handleEdit} />
                 ))}
               </div>
             </div>
@@ -149,8 +164,17 @@ export default function EquipePage() {
 
       {modalOpen && (
         <UserModal
+          membro={editingMembro}
           onClose={() => setModalOpen(false)}
           onCreated={() => {
+            setModalOpen(false)
+            loadData()
+          }}
+          onSaved={() => {
+            setModalOpen(false)
+            loadData()
+          }}
+          onDeleted={() => {
             setModalOpen(false)
             loadData()
           }}

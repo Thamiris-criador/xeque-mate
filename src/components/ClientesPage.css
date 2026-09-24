@@ -239,6 +239,11 @@
   color: var(--orange);
 }
 
+.badge-blue {
+  background: rgba(57, 135, 229, 0.15);
+  color: var(--blue);
+}
+
 .proxima-acao-text {
   color: var(--text-muted);
   font-size: 12px;

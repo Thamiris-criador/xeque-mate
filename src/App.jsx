@@ -11,9 +11,10 @@ import ReversaoPage from './components/ReversaoPage.jsx'
 import IndicacoesPage from './components/IndicacoesPage.jsx'
 import ContempladosPage from './components/ContempladosPage.jsx'
 import InadimplentesPage from './components/InadimplentesPage.jsx'
-import RelatorioSemanalPage from './components/RelatorioSemanalPage.jsx'
 import FinanceiroPage from './components/FinanceiroPage.jsx'
 import AniversariantesPage from './components/AniversariantesPage.jsx'
+import ComercialPage from './components/ComercialPage.jsx'
+import PlaybookPage from './components/PlaybookPage.jsx'
 import PlaceholderPage from './components/PlaceholderPage.jsx'
 import LoginPage from './components/LoginPage.jsx'
 import './App.css'
@@ -23,11 +24,14 @@ const PAGE_TITLES = {
   equipe: 'Equipe',
   cultura: 'Cultura',
   tarefas: 'Tarefas',
+  comercial: 'Comercial',
   clientes: 'Clientes',
-  'relatorio-semanal': 'Relatório semanal',
   financeiro: 'Financeiro',
   inadimplentes: 'Inadimplentes',
   aniversariantes: 'Aniversariantes',
+  'playbook-comercial': 'Playbook — Comercial',
+  'playbook-pos-vendas': 'Playbook — Pós-Vendas',
+  'playbook-financeiro': 'Playbook — Financeiro',
   contemplados: 'Contemplados',
   reversao: 'Reversão',
   indicacoes: 'Indicações',
@@ -76,6 +80,8 @@ export default function App() {
             <CulturaPage />
           ) : page === 'tarefas' ? (
             <TarefasPage />
+          ) : page === 'comercial' ? (
+            <ComercialPage />
           ) : page === 'reversao' ? (
             <ReversaoPage />
           ) : page === 'indicacoes' ? (
@@ -84,12 +90,16 @@ export default function App() {
             <ContempladosPage />
           ) : page === 'inadimplentes' ? (
             <InadimplentesPage />
-          ) : page === 'relatorio-semanal' ? (
-            <RelatorioSemanalPage />
           ) : page === 'financeiro' ? (
             <FinanceiroPage />
           ) : page === 'aniversariantes' ? (
             <AniversariantesPage />
+          ) : page === 'playbook-comercial' ? (
+            <PlaybookPage area="Comercial" />
+          ) : page === 'playbook-pos-vendas' ? (
+            <PlaybookPage area="Pós-Vendas" />
+          ) : page === 'playbook-financeiro' ? (
+            <PlaybookPage area="Financeiro" />
           ) : (
             <PlaceholderPage title={PAGE_TITLES[page]} />
           )}
