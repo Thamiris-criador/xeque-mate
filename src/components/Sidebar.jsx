@@ -26,12 +26,17 @@ const PLAYBOOK_CHILDREN = [
   { key: 'playbook-financeiro', label: 'Financeiro' },
 ]
 
+const TAREFAS_CHILDREN = [
+  { key: 'tarefas', label: 'Todas as tarefas' },
+  { key: 'tarefas-boletos', label: 'Boletos' },
+]
+
 const MENU = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { key: 'equipe', label: 'Equipe', icon: Users },
   { key: 'cultura', label: 'Cultura', icon: Sparkles },
   { key: 'clientes-group', label: 'Clientes', icon: UsersRound, children: CLIENTES_CHILDREN, defaultKey: 'clientes' },
-  { key: 'tarefas', label: 'Tarefas', icon: ListChecks },
+  { key: 'tarefas-group', label: 'Tarefas', icon: ListChecks, children: TAREFAS_CHILDREN, defaultKey: 'tarefas' },
   { key: 'comercial', label: 'Comercial', icon: Briefcase },
   { key: 'financeiro', label: 'Financeiro', icon: Wallet },
   { key: 'aniversariantes', label: 'Aniversariantes', icon: Cake },

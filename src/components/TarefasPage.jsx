@@ -13,7 +13,7 @@ const FILTROS_DATA = [
   { key: 'semana', label: 'Esta semana' },
 ]
 
-export default function TarefasPage() {
+export default function TarefasPage({ categoriaFixa }) {
   const [tarefas, setTarefas] = useState([])
   const [clientes, setClientes] = useState([])
   const [responsaveis, setResponsaveis] = useState([])
@@ -52,12 +52,13 @@ export default function TarefasPage() {
 
   const filtradas = useMemo(() => {
     return tarefas.filter((t) => {
+      if (categoriaFixa && t.categoria !== categoriaFixa) return false
       if (filtroData !== 'todas' && classificarDataTarefa(t.data) !== filtroData) return false
       if (filtroResponsavel !== 'todos' && String(t.responsavel_id) !== filtroResponsavel) return false
       if (filtroPrioridade !== 'todas' && t.prioridade !== filtroPrioridade) return false
       return true
     })
-  }, [tarefas, filtroData, filtroResponsavel, filtroPrioridade])
+  }, [tarefas, categoriaFixa, filtroData, filtroResponsavel, filtroPrioridade])
 
   function handleEdit(tarefa) {
     setEditing(tarefa)
@@ -73,8 +74,12 @@ export default function TarefasPage() {
     <div>
       <div className="page-header">
         <div>
-          <h1 className="page-title">TAREFAS</h1>
-          <p className="page-subtitle">Pendências e ações da equipe, por cliente e prioridade.</p>
+          <h1 className="page-title">{categoriaFixa ? categoriaFixa.toUpperCase() + 'S' : 'TAREFAS'}</h1>
+          <p className="page-subtitle">
+            {categoriaFixa === 'Boleto'
+              ? 'Tarefas criadas automaticamente pelo CRM, 5 dias antes do vencimento de cada cliente, pro Gabriel enviar o boleto.'
+              : 'Pendências e ações da equipe, por cliente e prioridade.'}
+          </p>
         </div>
         <button className="btn-primary" onClick={handleNew}>
           <Plus size={16} /> Nova tarefa
@@ -110,7 +115,7 @@ export default function TarefasPage() {
         </select>
       </div>
 
-      <div className="results-count">{filtradas.length} TAREFA(S)</div>
+      <div className="results-count">{filtradas.length} {categoriaFixa ? categoriaFixa.toUpperCase() + 'S' : 'TAREFA(S)'}</div>
 
       {error && <div className="error-box">Erro ao carregar tarefas: {error}</div>}
 

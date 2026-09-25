@@ -24,6 +24,7 @@ const PAGE_TITLES = {
   equipe: 'Equipe',
   cultura: 'Cultura',
   tarefas: 'Tarefas',
+  'tarefas-boletos': 'Boletos',
   comercial: 'Comercial',
   clientes: 'Clientes',
   financeiro: 'Financeiro',
@@ -106,6 +107,8 @@ export default function App() {
             <CulturaPage />
           ) : page === 'tarefas' ? (
             <TarefasPage />
+          ) : page === 'tarefas-boletos' ? (
+            <TarefasPage categoriaFixa="Boleto" />
           ) : page === 'comercial' ? (
             <ComercialPage />
           ) : page === 'reversao' ? (
