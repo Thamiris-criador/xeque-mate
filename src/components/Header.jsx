@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { Search, LogOut, ChevronDown, ImagePlus } from 'lucide-react'
+import { Search, LogOut, ChevronDown } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import './Header.css'
 
 export default function Header({ pageLabel, userEmail, onLogout }) {
   const [membro, setMembro] = useState(null)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [uploading, setUploading] = useState(false)
   const menuRef = useRef(null)
 
   useEffect(() => {
@@ -21,26 +20,6 @@ export default function Header({ pageLabel, userEmail, onLogout }) {
     document.addEventListener('mousedown', handleClickFora)
     return () => document.removeEventListener('mousedown', handleClickFora)
   }, [])
-
-  async function handleFotoChange(e) {
-    const file = e.target.files?.[0]
-    if (!file || !membro) return
-
-    setUploading(true)
-    const extensao = file.name.split('.').pop()
-    const caminho = `${membro.id}-${Date.now()}.${extensao}`
-
-    const { error: uploadError } = await supabase.storage.from('equipe-fotos').upload(caminho, file, { upsert: true })
-
-    if (!uploadError) {
-      const { data } = supabase.storage.from('equipe-fotos').getPublicUrl(caminho)
-      await supabase.from('equipe').update({ foto_url: data.publicUrl }).eq('id', membro.id)
-      setMembro((m) => ({ ...m, foto_url: data.publicUrl }))
-    }
-
-    setUploading(false)
-    setMenuOpen(false)
-  }
 
   const initials = (userEmail || 'XM').split('@')[0].slice(0, 2).toUpperCase()
   const areaLabel = membro?.area ? membro.area.toUpperCase() : null
@@ -69,11 +48,6 @@ export default function Header({ pageLabel, userEmail, onLogout }) {
 
           {menuOpen && (
             <div className="header-dropdown">
-              <label className="header-dropdown-item">
-                <ImagePlus size={15} />
-                {uploading ? 'Enviando...' : 'Trocar foto'}
-                <input type="file" accept="image/*" hidden onChange={handleFotoChange} disabled={!membro || uploading} />
-              </label>
               <button type="button" className="header-dropdown-item" onClick={onLogout}>
                 <LogOut size={15} />
                 Sair
