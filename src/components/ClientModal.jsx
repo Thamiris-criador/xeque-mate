@@ -464,6 +464,7 @@ export default function ClientModal({ client, responsaveisPosVendas, vendedores,
                     <option value="Indicação" />
                     <option value="Instagram" />
                     <option value="WhatsApp" />
+                    <option value="TikTok" />
                     <option value="Anúncio" />
                     <option value="Evento" />
                   </datalist>
