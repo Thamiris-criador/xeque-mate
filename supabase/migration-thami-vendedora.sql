@@ -2,6 +2,7 @@
 
 alter table equipe add column if not exists vende boolean not null default false;
 
-update equipe set vende = true where email = 'thamiris.abreu@xequemate.com.br';
+update equipe set vende = true
+where nome ilike '%thamiris%' or email ilike '%thamiris%' or email ilike '%thami%';
 
 notify pgrst, 'reload schema';

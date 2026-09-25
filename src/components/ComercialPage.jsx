@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from 'react'
 import {
   Plus, Users2, FileText, Handshake, Clock, TrendingUp, Pause, XCircle,
-  Phone, MessageCircle, MoreVertical, RotateCcw,
+  Phone, MessageCircle, MoreVertical,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import LeadModal from './LeadModal.jsx'
@@ -55,8 +55,18 @@ export default function ComercialPage() {
   const [statusFiltro, setStatusFiltro] = useState('todos')
   const [temperaturaFiltro, setTemperaturaFiltro] = useState('todas')
   const [proximoContatoFiltro, setProximoContatoFiltro] = useState('todos')
-  const [periodoFiltro, setPeriodoFiltro] = useState('todos')
-  const [somenteMeus, setSomenteMeus] = useState(false)
+  const [entradaFiltro, setEntradaFiltro] = useState('todos')
+  const [vendedoraFiltro, setVendedoraFiltro] = useState('todas')
+
+  const mesesEntrada = useMemo(() => {
+    const nomes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+    const agora = new Date()
+    return Array.from({ length: 6 }, (_, i) => {
+      const d = new Date(agora.getFullYear(), agora.getMonth() - i, 1)
+      const valor = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      return { valor, label: `${nomes[d.getMonth()]} de ${d.getFullYear()}` }
+    })
+  }, [])
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -83,7 +93,6 @@ export default function ComercialPage() {
 
   const vendedores = useMemo(() => equipe.filter((e) => e.area === 'Comercial' || e.vende), [equipe])
   const responsaveisPosVendas = useMemo(() => equipe.filter((e) => e.area === 'Pós-Vendas'), [equipe])
-  const meuId = useMemo(() => equipe.find((e) => e.email === userEmail)?.id, [equipe, userEmail])
   const souGestao = useMemo(() => {
     const eu = equipe.find((e) => e.email === userEmail)
     return !eu || eu.area === 'Liderança'
@@ -106,10 +115,11 @@ export default function ComercialPage() {
     const amanha = new Date(Date.now() + 86400000).toISOString().slice(0, 10)
 
     return leads.filter((l) => {
-      if (somenteMeus && meuId && l.vendedor_id !== meuId) return false
+      if (souGestao && vendedoraFiltro !== 'todas' && String(l.vendedor_id) !== vendedoraFiltro) return false
       if (statusFiltro !== 'todos' && l.status !== statusFiltro) return false
       if (temperaturaFiltro !== 'todas' && l.temperatura !== temperaturaFiltro) return false
-      if (periodoFiltro !== 'todos' && !dentroDoPeriodo(l.data_entrada, periodoFiltro)) return false
+      if ((entradaFiltro === 'hoje' || entradaFiltro === 'semana') && !dentroDoPeriodo(l.data_entrada, entradaFiltro)) return false
+      if (/^\d{4}-\d{2}$/.test(entradaFiltro) && l.data_entrada?.slice(0, 7) !== entradaFiltro) return false
 
       if (proximoContatoFiltro === 'hoje' && l.proximo_contato !== hoje) return false
       if (proximoContatoFiltro === 'amanha' && l.proximo_contato !== amanha) return false
@@ -123,7 +133,7 @@ export default function ComercialPage() {
       }
       return true
     })
-  }, [leads, somenteMeus, meuId, statusFiltro, temperaturaFiltro, proximoContatoFiltro, periodoFiltro, search])
+  }, [leads, souGestao, vendedoraFiltro, statusFiltro, temperaturaFiltro, proximoContatoFiltro, entradaFiltro, search])
 
   const proximasAcoes = useMemo(() => {
     return leads
@@ -131,14 +141,6 @@ export default function ComercialPage() {
       .sort((a, b) => a.proximo_contato.localeCompare(b.proximo_contato))
       .slice(0, mostrarTodasAcoes ? 30 : 6)
   }, [leads, mostrarTodasAcoes])
-
-  function limparFiltros() {
-    setSearch('')
-    setStatusFiltro('todos')
-    setTemperaturaFiltro('todas')
-    setProximoContatoFiltro('todos')
-    setPeriodoFiltro('todos')
-  }
 
   function handleNovo() {
     setEditing(null)
@@ -206,23 +208,23 @@ export default function ComercialPage() {
               <option value="atrasados">Atrasados</option>
               <option value="sem_data">Sem data</option>
             </select>
-            <select className="filter-select" value={periodoFiltro} onChange={(e) => setPeriodoFiltro(e.target.value)}>
+            <select className="filter-select" value={entradaFiltro} onChange={(e) => setEntradaFiltro(e.target.value)}>
               <option value="todos">Entrada: Todos</option>
               <option value="hoje">Hoje</option>
               <option value="semana">Esta semana</option>
-              <option value="mes">Este mês</option>
+              {mesesEntrada.map((m) => (
+                <option key={m.valor} value={m.valor}>{m.label}</option>
+              ))}
             </select>
-            <button type="button" className="btn-secondary" onClick={limparFiltros} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <RotateCcw size={14} /> Limpar filtros
-            </button>
+            {souGestao && (
+              <select className="filter-select" value={vendedoraFiltro} onChange={(e) => setVendedoraFiltro(e.target.value)}>
+                <option value="todas">Vendedora: Todas</option>
+                {vendedores.map((v) => (
+                  <option key={v.id} value={String(v.id)}>{v.nome}</option>
+                ))}
+              </select>
+            )}
           </div>
-
-          {souGestao && (
-            <label className="modal-checkbox" style={{ marginBottom: 12, display: 'inline-flex' }}>
-              <input type="checkbox" checked={somenteMeus} onChange={(e) => setSomenteMeus(e.target.checked)} />
-              Só meus leads
-            </label>
-          )}
 
           <div className="results-count">LEADS ({filtrados.length})</div>
 

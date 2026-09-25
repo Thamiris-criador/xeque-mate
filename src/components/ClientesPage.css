@@ -103,12 +103,13 @@
 
 .filters-row {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 16px;
 }
 
 .filter-search {
-  flex: 1;
+  flex: 1 1 200px;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -124,7 +125,8 @@
   padding: 10px 14px;
   color: var(--text);
   font-size: 13px;
-  min-width: 200px;
+  flex: 1 1 170px;
+  min-width: 0;
 }
 
 .results-count {
