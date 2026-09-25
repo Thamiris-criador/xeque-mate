@@ -455,6 +455,7 @@ export default function ClientModal({ client, responsaveisPosVendas, vendedores,
                   <select value={form.dia_vencimento} onChange={(e) => update('dia_vencimento', e.target.value)}>
                     <option value="">—</option>
                     <option value="10">10</option>
+                    <option value="13">13</option>
                     <option value="15">15</option>
                     <option value="20">20</option>
                     <option value="21">21</option>
