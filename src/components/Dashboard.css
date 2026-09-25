@@ -25,6 +25,7 @@
   text-align: left;
   width: 100%;
   font-family: inherit;
+  color: inherit;
 }
 
 .stat-tile.clickable:hover {
