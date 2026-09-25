@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Search, LogOut, Bell, MessageSquare, ChevronDown, ImagePlus } from 'lucide-react'
+import { Search, LogOut, ChevronDown, ImagePlus } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import './Header.css'
 
@@ -43,10 +43,11 @@ export default function Header({ pageLabel, userEmail, onLogout }) {
   }
 
   const initials = (userEmail || 'XM').split('@')[0].slice(0, 2).toUpperCase()
+  const areaLabel = membro?.area ? membro.area.toUpperCase() : null
 
   return (
     <header className="header">
-      <div className="header-breadcrumb">PÓS-VENDAS | XEQUE MATE</div>
+      <div className="header-breadcrumb">{areaLabel ? `${areaLabel} | XEQUE MATE` : 'XEQUE MATE'}</div>
 
       <div className="header-search">
         <Search size={16} />
@@ -54,13 +55,6 @@ export default function Header({ pageLabel, userEmail, onLogout }) {
       </div>
 
       <div className="header-account">
-        <button className="header-icon-btn" title="Notificações">
-          <Bell size={18} />
-        </button>
-        <button className="header-icon-btn" title="Mensagens">
-          <MessageSquare size={18} />
-        </button>
-
         <div className="header-account-menu" ref={menuRef}>
           <button type="button" className="header-account-trigger" onClick={() => setMenuOpen((v) => !v)}>
             <div className="header-avatar">
