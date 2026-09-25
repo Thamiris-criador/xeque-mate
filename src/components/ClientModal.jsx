@@ -127,7 +127,10 @@ export default function ClientModal({ client, responsaveisPosVendas, vendedores,
       .select('*')
       .eq('cliente_id', client.id)
       .order('created_at', { ascending: false })
-      .then(({ data }) => setHistorico(data || []))
+      .then(({ data, error: loadError }) => {
+        if (loadError) setError(loadError.message)
+        setHistorico(data || [])
+      })
   }
 
   useEffect(() => {
@@ -233,6 +236,7 @@ export default function ClientModal({ client, responsaveisPosVendas, vendedores,
   async function handleAddObservacao() {
     if (!novaObservacao.trim()) return
     setSavingObs(true)
+    setError(null)
 
     const { error: obsError } = await supabase.from('historico').insert({
       cliente_id: client.id,
@@ -242,7 +246,9 @@ export default function ClientModal({ client, responsaveisPosVendas, vendedores,
 
     setSavingObs(false)
 
-    if (!obsError) {
+    if (obsError) {
+      setError(obsError.message)
+    } else {
       setNovaObservacao('')
       loadHistorico()
     }
