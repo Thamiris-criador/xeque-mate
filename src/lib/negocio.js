@@ -27,6 +27,39 @@ export function proximoDiaUtil(dataStr) {
   return d
 }
 
+export const JORNADA_LABELS = {
+  novo_pos_venda: 'Novo pós-venda',
+  em_andamento: 'Em andamento',
+  contemplado: 'Contemplado',
+  finalizado: 'Finalizado',
+}
+
+export const FINANCEIRO_LABELS = {
+  em_dia: 'Em dia',
+  inadimplente: 'Inadimplente',
+  acordo: 'Acordo',
+  cancelado: 'Cancelado',
+  contemplado: 'Contemplado',
+}
+
+export const STATUS_DOCUMENTACAO_LABELS = {
+  documentacao: 'Em documentação',
+  carta_liberada: 'Carta liberada para uso',
+  concluido: 'Processo concluído',
+}
+
+export const ACOMPANHAMENTO_STATUS_LABELS = {
+  novo: 'Novo',
+  em_acompanhamento: 'Em acompanhamento',
+  aguardando_cliente: 'Aguardando cliente',
+  pendencia: 'Pendência',
+  resolvido: 'Resolvido',
+  contemplado: 'Contemplado',
+  cancelamento: 'Cancelamento',
+  reversao: 'Reversão',
+  finalizado: 'Finalizado',
+}
+
 export function formatarData(data) {
   if (!data) return '—'
   const d = typeof data === 'string' ? new Date(data + 'T00:00:00') : data

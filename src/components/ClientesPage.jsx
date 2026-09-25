@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, useCallback } from 'react'
 import { Plus, Eye, FileText, KeyRound, CheckCircle2 } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import ClientModal from './ClientModal.jsx'
+import { JORNADA_LABELS, FINANCEIRO_LABELS } from '../lib/negocio.js'
 import './ClientesPage.css'
 import './Dashboard.css'
 
@@ -30,21 +31,6 @@ const TABS = [
   { key: 'inadimplentes', label: 'Inadimplentes', color: 'var(--red)' },
   { key: 'cancelados', label: 'Cancelados', color: 'var(--gray-chart)' },
 ]
-
-const JORNADA_LABELS = {
-  novo_pos_venda: 'Novo pós-venda',
-  em_andamento: 'Em andamento',
-  contemplado: 'Contemplado',
-  finalizado: 'Finalizado',
-}
-
-const FINANCEIRO_LABELS = {
-  em_dia: 'Em dia',
-  inadimplente: 'Inadimplente',
-  acordo: 'Acordo',
-  cancelado: 'Cancelado',
-  contemplado: 'Contemplado',
-}
 
 const FINANCEIRO_BADGE_CLASS = {
   em_dia: 'badge-green',

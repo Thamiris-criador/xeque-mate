@@ -9,7 +9,21 @@ import {
   PRIORIDADE_COLOR,
   TAREFA_STATUS_LABELS,
   BRINDES_OPCOES,
+  JORNADA_LABELS,
+  FINANCEIRO_LABELS,
+  STATUS_DOCUMENTACAO_LABELS,
+  ACOMPANHAMENTO_STATUS_LABELS,
 } from '../lib/negocio.js'
+
+const CAMPOS_AUDITAVEIS = {
+  financeiro_status: { label: 'Status financeiro', labels: FINANCEIRO_LABELS },
+  jornada: { label: 'Jornada', labels: JORNADA_LABELS },
+  acompanhamento_status: { label: 'Status do acompanhamento', labels: ACOMPANHAMENTO_STATUS_LABELS },
+  status_documentacao: { label: 'Status da documentação', labels: STATUS_DOCUMENTACAO_LABELS },
+  situacao_cota: { label: 'Situação da cota' },
+  responsavel_id: { label: 'Responsável (Onboarding)', pessoas: 'responsaveisPosVendas' },
+  vendedor_id: { label: 'Vendedor', pessoas: 'vendedores' },
+}
 import './ClientModal.css'
 
 const TABS = [
@@ -96,6 +110,16 @@ export default function ClientModal({ client, responsaveisPosVendas, vendedores,
   const [historico, setHistorico] = useState([])
   const [novaObservacao, setNovaObservacao] = useState('')
   const [savingObs, setSavingObs] = useState(false)
+  const [meuNome, setMeuNome] = useState('')
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      const userEmail = data?.session?.user?.email
+      if (!userEmail) return
+      supabase.from('equipe').select('nome').eq('email', userEmail).maybeSingle()
+        .then(({ data: eu }) => setMeuNome(eu?.nome || userEmail))
+    })
+  }, [])
 
   function update(field, value) {
     setForm((f) => ({ ...f, [field]: value }))
@@ -214,6 +238,8 @@ export default function ClientModal({ client, responsaveisPosVendas, vendedores,
       return
     }
 
+    if (isEdit) await registrarAuditoria(payload)
+
     onSaved()
   }
 
@@ -233,6 +259,39 @@ export default function ClientModal({ client, responsaveisPosVendas, vendedores,
     onDeleted()
   }
 
+  async function registrarAuditoria(payload) {
+    function formatarValor(cfg, valor) {
+      if (valor === null || valor === '') return '—'
+      if (cfg.labels) return cfg.labels[valor] || valor
+      if (cfg.pessoas) {
+        const lista = cfg.pessoas === 'vendedores' ? vendedores : responsaveisPosVendas
+        return lista.find((p) => String(p.id) === String(valor))?.nome || '—'
+      }
+      return valor
+    }
+
+    const linhas = []
+    for (const [campo, cfg] of Object.entries(CAMPOS_AUDITAVEIS)) {
+      const antes = client[campo] ?? null
+      const depois = payload[campo] ?? null
+      if (String(antes ?? '') === String(depois ?? '')) continue
+
+      linhas.push({
+        cliente_id: client.id,
+        tipo: 'auditoria',
+        campo,
+        valor_anterior: antes === null ? null : String(antes),
+        valor_novo: depois === null ? null : String(depois),
+        usuario: meuNome || null,
+        descricao: `${cfg.label} alterado de "${formatarValor(cfg, antes)}" para "${formatarValor(cfg, depois)}"`,
+      })
+    }
+
+    if (linhas.length) {
+      await supabase.from('historico').insert(linhas)
+    }
+  }
+
   async function handleAddObservacao() {
     if (!novaObservacao.trim()) return
     setSavingObs(true)
@@ -242,6 +301,7 @@ export default function ClientModal({ client, responsaveisPosVendas, vendedores,
       cliente_id: client.id,
       tipo: 'observacao',
       descricao: novaObservacao.trim(),
+      usuario: meuNome || null,
     })
 
     setSavingObs(false)
@@ -737,7 +797,10 @@ export default function ClientModal({ client, responsaveisPosVendas, vendedores,
                 <div className="historico-list">
                   {historico.map((h) => (
                     <div className="historico-item" key={h.id}>
-                      <div className="historico-data">{formatarData(h.created_at?.slice(0, 10))}</div>
+                      <div className="historico-data">
+                        {formatarData(h.created_at?.slice(0, 10))}
+                        {h.usuario && ` · ${h.usuario}`}
+                      </div>
                       <div className="historico-descricao">
                         {h.tipo === 'auditoria' && <span className="badge badge-neutral" style={{ marginRight: 8 }}>AUDITORIA</span>}
                         {h.descricao}
