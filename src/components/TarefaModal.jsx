@@ -3,7 +3,7 @@ import { X, Trash2 } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import './ClientModal.css'
 
-export default function TarefaModal({ tarefa, clientes, responsaveis, presetClienteId, onClose, onSaved, onDeleted }) {
+export default function TarefaModal({ tarefa, clientes, responsaveis, presetClienteId, presetCategoria, presetResponsavelId, onClose, onSaved, onDeleted }) {
   const isEdit = Boolean(tarefa)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -11,12 +11,12 @@ export default function TarefaModal({ tarefa, clientes, responsaveis, presetClie
     titulo: tarefa?.titulo || '',
     descricao: tarefa?.descricao || '',
     cliente_id: tarefa?.cliente_id || presetClienteId || '',
-    responsavel_id: tarefa?.responsavel_id || '',
+    responsavel_id: tarefa?.responsavel_id || presetResponsavelId || '',
     data: tarefa?.data || new Date().toISOString().slice(0, 10),
     horario: tarefa?.horario || '',
     prioridade: tarefa?.prioridade || 'verde',
     status: tarefa?.status || 'pendente',
-    categoria: tarefa?.categoria || '',
+    categoria: tarefa?.categoria || presetCategoria || '',
     observacao: tarefa?.observacao || '',
   })
   const [saving, setSaving] = useState(false)

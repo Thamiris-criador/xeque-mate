@@ -50,9 +50,12 @@ export default function TarefasPage({ categoriaFixa }) {
     supabase.from('equipe').select('id, nome').order('nome').then(({ data }) => setResponsaveis(data || []))
   }, [loadData])
 
+  const gabrielId = useMemo(() => responsaveis.find((r) => r.nome === 'Gabriel')?.id, [responsaveis])
+
   const filtradas = useMemo(() => {
     return tarefas.filter((t) => {
-      if (categoriaFixa && t.categoria !== categoriaFixa) return false
+      if (categoriaFixa === 'Boleto' && (t.categoria !== 'Boleto' || t.responsavel?.nome !== 'Gabriel')) return false
+      else if (categoriaFixa && t.categoria !== categoriaFixa) return false
       if (filtroData !== 'todas' && classificarDataTarefa(t.data) !== filtroData) return false
       if (filtroResponsavel !== 'todos' && String(t.responsavel_id) !== filtroResponsavel) return false
       if (filtroPrioridade !== 'todas' && t.prioridade !== filtroPrioridade) return false
@@ -75,11 +78,9 @@ export default function TarefasPage({ categoriaFixa }) {
       <div className="page-header">
         <div>
           <h1 className="page-title">{categoriaFixa ? categoriaFixa.toUpperCase() + 'S' : 'TAREFAS'}</h1>
-          <p className="page-subtitle">
-            {categoriaFixa === 'Boleto'
-              ? 'Tarefas criadas automaticamente pelo CRM, 5 dias antes do vencimento de cada cliente, pro Gabriel enviar o boleto.'
-              : 'Pendências e ações da equipe, por cliente e prioridade.'}
-          </p>
+          {!categoriaFixa && (
+            <p className="page-subtitle">Pendências e ações da equipe, por cliente e prioridade.</p>
+          )}
         </div>
         <button className="btn-primary" onClick={handleNew}>
           <Plus size={16} /> Nova tarefa
@@ -133,6 +134,7 @@ export default function TarefasPage({ categoriaFixa }) {
                 <div className="tarefa-meta">
                   {t.lead ? `Lead: ${t.lead.nome}` : t.cliente?.nome || 'Sem cliente'} · {t.responsavel?.nome || 'Sem responsável'} · {formatarData(t.data)}
                   {t.horario && ` às ${t.horario.slice(0, 5)}`}
+                  {categoriaFixa === 'Boleto' && t.descricao && ` · ${t.descricao}`}
                 </div>
               </div>
               <span className={`badge ${t.status === 'concluida' ? 'badge-green' : t.status === 'cancelada' ? 'badge-neutral' : 'badge-orange'}`}>
@@ -148,6 +150,8 @@ export default function TarefasPage({ categoriaFixa }) {
           tarefa={editing}
           clientes={clientes}
           responsaveis={responsaveis}
+          presetCategoria={categoriaFixa}
+          presetResponsavelId={categoriaFixa === 'Boleto' ? gabrielId : undefined}
           onClose={() => setModalOpen(false)}
           onSaved={() => {
             setModalOpen(false)
