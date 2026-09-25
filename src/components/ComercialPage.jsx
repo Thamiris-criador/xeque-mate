@@ -77,11 +77,11 @@ export default function ComercialPage() {
 
   useEffect(() => {
     loadData()
-    supabase.from('equipe').select('id, nome, area, email').order('nome').then(({ data }) => setEquipe(data || []))
+    supabase.from('equipe').select('id, nome, area, email, vende').order('nome').then(({ data }) => setEquipe(data || []))
     supabase.auth.getSession().then(({ data }) => setUserEmail(data?.session?.user?.email || ''))
   }, [loadData])
 
-  const vendedores = useMemo(() => equipe.filter((e) => e.area === 'Comercial'), [equipe])
+  const vendedores = useMemo(() => equipe.filter((e) => e.area === 'Comercial' || e.vende), [equipe])
   const responsaveisPosVendas = useMemo(() => equipe.filter((e) => e.area === 'Pós-Vendas'), [equipe])
   const meuId = useMemo(() => equipe.find((e) => e.email === userEmail)?.id, [equipe, userEmail])
   const souGestao = useMemo(() => {

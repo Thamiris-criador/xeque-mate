@@ -123,12 +123,12 @@ export default function ClientesPage() {
     loadData()
     supabase
       .from('equipe')
-      .select('id, nome, area')
+      .select('id, nome, area, vende')
       .order('nome')
       .then(({ data }) => setResponsaveis(data || []))
   }, [loadData])
 
-  const vendedores = useMemo(() => responsaveis.filter((r) => r.area === 'Comercial'), [responsaveis])
+  const vendedores = useMemo(() => responsaveis.filter((r) => r.area === 'Comercial' || r.vende), [responsaveis])
   const responsaveisPosVendas = useMemo(() => responsaveis.filter((r) => r.area === 'Pós-Vendas'), [responsaveis])
 
   const contagemEtapaContemplacao = useMemo(() => {

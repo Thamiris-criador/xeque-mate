@@ -31,10 +31,10 @@ export default function InadimplentesPage() {
 
   useEffect(() => {
     loadData()
-    supabase.from('equipe').select('id, nome, area').order('nome').then(({ data }) => setEquipe(data || []))
+    supabase.from('equipe').select('id, nome, area, vende').order('nome').then(({ data }) => setEquipe(data || []))
   }, [loadData])
 
-  const vendedores = useMemo(() => equipe.filter((e) => e.area === 'Comercial'), [equipe])
+  const vendedores = useMemo(() => equipe.filter((e) => e.area === 'Comercial' || e.vende), [equipe])
   const responsaveisPosVendas = useMemo(() => equipe.filter((e) => e.area === 'Pós-Vendas'), [equipe])
 
   const ordenados = useMemo(() => {
