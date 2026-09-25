@@ -98,7 +98,7 @@ export default function App() {
           {!paginaLiberada ? (
             <PlaceholderPage title="Acesso restrito" subtitle="Você não tem permissão para acessar esta área." />
           ) : page === 'clientes' ? (
-            <ClientesPage />
+            <ClientesPage isAdmin={isAdmin} />
           ) : page === 'dashboard' ? (
             <Dashboard />
           ) : page === 'equipe' ? (
@@ -116,13 +116,13 @@ export default function App() {
           ) : page === 'indicacoes' ? (
             <IndicacoesPage />
           ) : page === 'contemplados' ? (
-            <ContempladosPage />
+            <ContempladosPage isAdmin={isAdmin} />
           ) : page === 'inadimplentes' ? (
-            <InadimplentesPage />
+            <InadimplentesPage isAdmin={isAdmin} />
           ) : page === 'financeiro' ? (
             <FinanceiroPage />
           ) : page === 'aniversariantes' ? (
-            <AniversariantesPage />
+            <AniversariantesPage isAdmin={isAdmin} />
           ) : page === 'playbook-comercial' ? (
             <PlaybookPage area="Comercial" />
           ) : page === 'playbook-pos-vendas' ? (

@@ -4,7 +4,7 @@ import ClientModal from './ClientModal.jsx'
 import { calcularDiasAtraso } from '../lib/negocio.js'
 import './EquipePage.css'
 
-export default function InadimplentesPage() {
+export default function InadimplentesPage({ isAdmin }) {
   const [clientes, setClientes] = useState([])
   const [equipe, setEquipe] = useState([])
   const [loading, setLoading] = useState(true)
@@ -93,6 +93,7 @@ export default function InadimplentesPage() {
           initialTab="financeiro"
           responsaveisPosVendas={responsaveisPosVendas}
           vendedores={vendedores}
+          isAdmin={isAdmin}
           onClose={() => setModalOpen(false)}
           onSaved={() => { setModalOpen(false); loadData() }}
           onDeleted={() => { setModalOpen(false); loadData() }}

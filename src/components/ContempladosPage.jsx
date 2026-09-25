@@ -37,7 +37,7 @@ function EtapaStepper({ etapaAtual }) {
   )
 }
 
-export default function ContempladosPage() {
+export default function ContempladosPage({ isAdmin }) {
   const [clientes, setClientes] = useState([])
   const [equipe, setEquipe] = useState([])
   const [loading, setLoading] = useState(true)
@@ -139,6 +139,7 @@ export default function ContempladosPage() {
           initialTab="contemplacao"
           responsaveisPosVendas={responsaveisPosVendas}
           vendedores={vendedores}
+          isAdmin={isAdmin}
           onClose={() => setModalOpen(false)}
           onSaved={() => { setModalOpen(false); loadData() }}
           onDeleted={() => { setModalOpen(false); loadData() }}

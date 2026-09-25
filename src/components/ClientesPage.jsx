@@ -76,7 +76,7 @@ function ProximaAcaoBadge({ value }) {
   return <span className="proxima-acao-text">{value}</span>
 }
 
-export default function ClientesPage() {
+export default function ClientesPage({ isAdmin }) {
   const [tab, setTab] = useState('todos')
   const [search, setSearch] = useState('')
   const [responsavelFiltro, setResponsavelFiltro] = useState('todos')
@@ -317,6 +317,7 @@ export default function ClientesPage() {
           client={editingClient}
           responsaveisPosVendas={responsaveisPosVendas}
           vendedores={vendedores}
+          isAdmin={isAdmin}
           onClose={() => setModalOpen(false)}
           onSaved={() => {
             setModalOpen(false)

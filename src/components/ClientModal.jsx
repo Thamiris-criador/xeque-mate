@@ -37,9 +37,14 @@ const TABS = [
   { key: 'historico', label: 'Histórico', requerEdit: true },
 ]
 
-export default function ClientModal({ client, responsaveisPosVendas, vendedores, initialTab, onClose, onSaved, onDeleted }) {
+export default function ClientModal({ client, responsaveisPosVendas, vendedores, initialTab, isAdmin, onClose, onSaved, onDeleted }) {
   const isEdit = Boolean(client)
-  const [tab, setTab] = useState(initialTab || 'dados')
+  const abasVisiveis = isAdmin ? TABS : TABS.filter((t) => t.key !== 'comercial')
+  const [tab, setTab] = useState(initialTab && (isAdmin || initialTab !== 'comercial') ? initialTab : 'dados')
+
+  useEffect(() => {
+    if (!isAdmin && tab === 'comercial') setTab('dados')
+  }, [isAdmin, tab])
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [form, setForm] = useState({
@@ -349,7 +354,7 @@ export default function ClientModal({ client, responsaveisPosVendas, vendedores,
         )}
 
         <div className="modal-tabs">
-          {TABS.map((t) => (
+          {abasVisiveis.map((t) => (
             <button
               key={t.key}
               type="button"
