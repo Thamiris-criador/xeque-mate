@@ -5,13 +5,15 @@ import ReversaoModal from './ReversaoModal.jsx'
 import { REVERSAO_STATUS_LABELS, REVERSAO_BADGE_CLASS, VALOR_BONIFICACAO_REVERSAO, formatarData } from '../lib/negocio.js'
 import './EquipePage.css'
 
-export default function ReversaoPage() {
+const EM_PROCESSO = ['em_contato', 'demonstrou_interesse', 'em_negociacao']
+
+export default function ReversaoPage({ filtroStatus: filtroInicial }) {
   const [reversoes, setReversoes] = useState([])
   const [clientes, setClientes] = useState([])
   const [responsaveis, setResponsaveis] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [filtroStatus, setFiltroStatus] = useState('todos')
+  const [filtroStatus, setFiltroStatus] = useState(filtroInicial || 'todos')
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
 
@@ -39,7 +41,11 @@ export default function ReversaoPage() {
   }, [loadData])
 
   const filtradas = useMemo(
-    () => reversoes.filter((r) => filtroStatus === 'todos' || r.status === filtroStatus),
+    () => reversoes.filter((r) => {
+      if (filtroStatus === 'todos') return true
+      if (filtroStatus === 'em_processo') return EM_PROCESSO.includes(r.status)
+      return r.status === filtroStatus
+    }),
     [reversoes, filtroStatus]
   )
 
@@ -77,6 +83,7 @@ export default function ReversaoPage() {
       <div className="filters-row">
         <select className="filter-select" value={filtroStatus} onChange={(e) => setFiltroStatus(e.target.value)}>
           <option value="todos">Todos os status</option>
+          <option value="em_processo">Em processo (contato/negociação)</option>
           {Object.entries(REVERSAO_STATUS_LABELS).map(([k, label]) => (
             <option key={k} value={k}>{label}</option>
           ))}

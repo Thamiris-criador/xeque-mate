@@ -5,13 +5,13 @@ import IndicacaoModal from './IndicacaoModal.jsx'
 import { INDICACAO_STATUS_LABELS, INDICACAO_BADGE_CLASS, formatarData } from '../lib/negocio.js'
 import './EquipePage.css'
 
-export default function IndicacoesPage() {
+export default function IndicacoesPage({ filtroStatus: filtroInicial }) {
   const [indicacoes, setIndicacoes] = useState([])
   const [clientes, setClientes] = useState([])
   const [responsaveis, setResponsaveis] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [filtroStatus, setFiltroStatus] = useState('todos')
+  const [filtroStatus, setFiltroStatus] = useState(filtroInicial || 'todos')
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
 
@@ -39,7 +39,11 @@ export default function IndicacoesPage() {
   }, [loadData])
 
   const filtradas = useMemo(
-    () => indicacoes.filter((i) => filtroStatus === 'todos' || i.status === filtroStatus),
+    () => indicacoes.filter((i) => {
+      if (filtroStatus === 'todos') return true
+      if (filtroStatus === 'recebidas') return i.status !== 'solicitada'
+      return i.status === filtroStatus
+    }),
     [indicacoes, filtroStatus]
   )
 
@@ -63,6 +67,7 @@ export default function IndicacoesPage() {
       <div className="filters-row">
         <select className="filter-select" value={filtroStatus} onChange={(e) => setFiltroStatus(e.target.value)}>
           <option value="todos">Todos os status</option>
+          <option value="recebidas">Recebidas (todas exceto solicitada)</option>
           {Object.entries(INDICACAO_STATUS_LABELS).map(([k, label]) => (
             <option key={k} value={k}>{label}</option>
           ))}

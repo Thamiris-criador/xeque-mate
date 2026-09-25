@@ -25,15 +25,21 @@ const STATUS_META = {
   cancelado: { label: 'Cancelado', color: 'var(--gray-chart)' },
 }
 
-function StatTile({ icon: Icon, label, value, color, hint }) {
+function StatTile({ icon: Icon, label, value, color, hint, onClick }) {
+  const Tag = onClick ? 'button' : 'div'
   return (
-    <div className="stat-tile" title={hint}>
+    <Tag
+      className={`stat-tile${onClick ? ' clickable' : ''}`}
+      title={hint}
+      type={onClick ? 'button' : undefined}
+      onClick={onClick}
+    >
       <div className="stat-tile-icon" style={{ color }}>
         <Icon size={18} />
       </div>
       <div className="stat-tile-value">{value}</div>
       <div className="stat-tile-label">{label}</div>
-    </div>
+    </Tag>
   )
 }
 
@@ -67,7 +73,7 @@ function StatusLegend() {
   )
 }
 
-export default function Dashboard() {
+export default function Dashboard({ onNavigate }) {
   const [clientes, setClientes] = useState([])
   const [tarefas, setTarefas] = useState([])
   const [reversoes, setReversoes] = useState([])
@@ -203,18 +209,18 @@ export default function Dashboard() {
 
           <div className="dashboard-section-title">Pendências e tarefas</div>
           <div className="stat-tiles-row">
-            <StatTile icon={ListTodo} label="Clientes com pendências abertas" value={metrics.clientesComPendencia} color="var(--orange)" />
-            <StatTile icon={CheckCircle2} label="Pendências resolvidas" value={metrics.pendenciasResolvidas} color="var(--green)" />
-            <StatTile icon={CalendarCheck} label="Tarefas do dia" value={metrics.tarefasHoje} color="var(--blue)" />
-            <StatTile icon={CalendarClock} label="Tarefas atrasadas" value={metrics.tarefasAtrasadas} color="var(--red)" />
+            <StatTile icon={ListTodo} label="Clientes com pendências abertas" value={metrics.clientesComPendencia} color="var(--orange)" onClick={() => onNavigate?.('tarefas', { status: 'abertas' })} />
+            <StatTile icon={CheckCircle2} label="Pendências resolvidas" value={metrics.pendenciasResolvidas} color="var(--green)" onClick={() => onNavigate?.('tarefas', { status: 'concluidas' })} />
+            <StatTile icon={CalendarCheck} label="Tarefas do dia" value={metrics.tarefasHoje} color="var(--blue)" onClick={() => onNavigate?.('tarefas', { data: 'hoje' })} />
+            <StatTile icon={CalendarClock} label="Tarefas atrasadas" value={metrics.tarefasAtrasadas} color="var(--red)" onClick={() => onNavigate?.('tarefas', { data: 'atrasada' })} />
           </div>
 
           <div className="dashboard-section-title">Reversão e indicações</div>
           <div className="stat-tiles-row">
-            <StatTile icon={RotateCcw} label="Em processo de reversão" value={metrics.emReversao} color="var(--orange)" />
-            <StatTile icon={Undo2} label="Reversões confirmadas" value={metrics.reversoesConfirmadas} color="var(--green)" />
-            <StatTile icon={Share2} label="Indicações solicitadas" value={metrics.indicacoesSolicitadas} color="var(--blue)" />
-            <StatTile icon={UserCheck} label="Indicações recebidas" value={metrics.indicacoesRecebidas} color="var(--green)" />
+            <StatTile icon={RotateCcw} label="Em processo de reversão" value={metrics.emReversao} color="var(--orange)" onClick={() => onNavigate?.('reversao', { filtroStatus: 'em_processo' })} />
+            <StatTile icon={Undo2} label="Reversões confirmadas" value={metrics.reversoesConfirmadas} color="var(--green)" onClick={() => onNavigate?.('reversao', { filtroStatus: 'revertido' })} />
+            <StatTile icon={Share2} label="Indicações solicitadas" value={metrics.indicacoesSolicitadas} color="var(--blue)" onClick={() => onNavigate?.('indicacoes', { filtroStatus: 'solicitada' })} />
+            <StatTile icon={UserCheck} label="Indicações recebidas" value={metrics.indicacoesRecebidas} color="var(--green)" onClick={() => onNavigate?.('indicacoes', { filtroStatus: 'recebidas' })} />
           </div>
 
           <div className="dashboard-section-title">Consórcio</div>

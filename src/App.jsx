@@ -43,8 +43,14 @@ const PAGINAS_VENDEDORA = ['comercial', 'playbook-comercial', 'equipe', 'cultura
 
 export default function App() {
   const [page, setPage] = useState('clientes')
+  const [navParams, setNavParams] = useState({})
   const [session, setSession] = useState(undefined) // undefined = verificando, null = deslogado, obj = logado
   const [membro, setMembro] = useState(null)
+
+  function irPara(pagina, params = {}) {
+    setNavParams(params)
+    setPage(pagina)
+  }
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session: s } }) => setSession(s ?? null))
@@ -84,7 +90,7 @@ export default function App() {
     <div className="app-shell">
       <Sidebar
         current={page}
-        onNavigate={setPage}
+        onNavigate={irPara}
         apenasComercial={isVendedora}
         ocultarComercial={!isAdmin && !isVendedora}
       />
@@ -100,21 +106,21 @@ export default function App() {
           ) : page === 'clientes' ? (
             <ClientesPage isAdmin={isAdmin} />
           ) : page === 'dashboard' ? (
-            <Dashboard />
+            <Dashboard onNavigate={irPara} />
           ) : page === 'equipe' ? (
             <EquipePage />
           ) : page === 'cultura' ? (
             <CulturaPage />
           ) : page === 'tarefas' ? (
-            <TarefasPage />
+            <TarefasPage data={navParams.data} status={navParams.status} />
           ) : page === 'tarefas-boletos' ? (
             <TarefasPage categoriaFixa="Boleto" />
           ) : page === 'comercial' ? (
             <ComercialPage />
           ) : page === 'reversao' ? (
-            <ReversaoPage />
+            <ReversaoPage filtroStatus={navParams.filtroStatus} />
           ) : page === 'indicacoes' ? (
-            <IndicacoesPage />
+            <IndicacoesPage filtroStatus={navParams.filtroStatus} />
           ) : page === 'contemplados' ? (
             <ContempladosPage isAdmin={isAdmin} />
           ) : page === 'inadimplentes' ? (

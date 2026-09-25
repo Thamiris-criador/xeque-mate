@@ -20,6 +20,18 @@
   padding: 16px 18px;
 }
 
+.stat-tile.clickable {
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  font-family: inherit;
+}
+
+.stat-tile.clickable:hover {
+  background: var(--bg-hover);
+  border-color: var(--green);
+}
+
 .stat-tile-icon {
   display: flex;
   margin-bottom: 10px;

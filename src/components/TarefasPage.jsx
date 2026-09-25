@@ -13,7 +13,7 @@ const FILTROS_DATA = [
   { key: 'semana', label: 'Esta semana' },
 ]
 
-export default function TarefasPage({ categoriaFixa }) {
+export default function TarefasPage({ categoriaFixa, data: dataInicial, status: statusInicial }) {
   const [tarefas, setTarefas] = useState([])
   const [clientes, setClientes] = useState([])
   const [responsaveis, setResponsaveis] = useState([])
@@ -22,9 +22,10 @@ export default function TarefasPage({ categoriaFixa }) {
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
 
-  const [filtroData, setFiltroData] = useState('todas')
+  const [filtroData, setFiltroData] = useState(dataInicial || 'todas')
   const [filtroResponsavel, setFiltroResponsavel] = useState('todos')
   const [filtroPrioridade, setFiltroPrioridade] = useState('todas')
+  const [filtroStatus, setFiltroStatus] = useState(statusInicial || 'todas')
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -59,9 +60,12 @@ export default function TarefasPage({ categoriaFixa }) {
       if (filtroData !== 'todas' && classificarDataTarefa(t.data) !== filtroData) return false
       if (filtroResponsavel !== 'todos' && String(t.responsavel_id) !== filtroResponsavel) return false
       if (filtroPrioridade !== 'todas' && t.prioridade !== filtroPrioridade) return false
+      if (filtroStatus === 'abertas' && ['concluida', 'cancelada'].includes(t.status)) return false
+      if (filtroStatus === 'concluidas' && t.status !== 'concluida') return false
+      if (filtroStatus === 'canceladas' && t.status !== 'cancelada') return false
       return true
     })
-  }, [tarefas, categoriaFixa, filtroData, filtroResponsavel, filtroPrioridade])
+  }, [tarefas, categoriaFixa, filtroData, filtroResponsavel, filtroPrioridade, filtroStatus])
 
   function handleEdit(tarefa) {
     setEditing(tarefa)
@@ -113,6 +117,12 @@ export default function TarefasPage({ categoriaFixa }) {
           <option value="vermelho">Vermelho (crítica)</option>
           <option value="amarelo">Amarelo (importante)</option>
           <option value="verde">Verde (normal)</option>
+        </select>
+        <select className="filter-select" value={filtroStatus} onChange={(e) => setFiltroStatus(e.target.value)}>
+          <option value="todas">Todos os status</option>
+          <option value="abertas">Abertas (pendente/andamento)</option>
+          <option value="concluidas">Concluídas</option>
+          <option value="canceladas">Canceladas</option>
         </select>
       </div>
 
