@@ -38,9 +38,12 @@ const PAGE_TITLES = {
   configuracoes: 'Configurações',
 }
 
+const PAGINAS_VENDEDORA = ['comercial', 'playbook-comercial', 'equipe', 'cultura']
+
 export default function App() {
   const [page, setPage] = useState('clientes')
   const [session, setSession] = useState(undefined) // undefined = verificando, null = deslogado, obj = logado
+  const [membro, setMembro] = useState(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session: s } }) => setSession(s ?? null))
@@ -52,6 +55,20 @@ export default function App() {
     return () => subscription.unsubscribe()
   }, [])
 
+  useEffect(() => {
+    if (!session?.user?.email) return
+    supabase.from('equipe').select('*').eq('email', session.user.email).maybeSingle().then(({ data }) => setMembro(data))
+  }, [session])
+
+  const isAdmin = !membro || membro.acesso_total || membro.area === 'Liderança'
+  const isVendedora = !isAdmin && (membro.area === 'Comercial' || membro.vende)
+
+  useEffect(() => {
+    if (!membro) return
+    if (isVendedora && !PAGINAS_VENDEDORA.includes(page)) setPage('comercial')
+    if (!isVendedora && !isAdmin && page === 'comercial') setPage('clientes')
+  }, [membro, isVendedora, isAdmin, page])
+
   if (session === undefined) {
     return <div className="app-loading">Carregando...</div>
   }
@@ -60,9 +77,16 @@ export default function App() {
     return <LoginPage />
   }
 
+  const paginaLiberada = isAdmin || (isVendedora ? PAGINAS_VENDEDORA.includes(page) : page !== 'comercial')
+
   return (
     <div className="app-shell">
-      <Sidebar current={page} onNavigate={setPage} />
+      <Sidebar
+        current={page}
+        onNavigate={setPage}
+        apenasComercial={isVendedora}
+        ocultarComercial={!isAdmin && !isVendedora}
+      />
       <div className="app-main">
         <Header
           pageLabel={PAGE_TITLES[page]}
@@ -70,7 +94,9 @@ export default function App() {
           onLogout={() => supabase.auth.signOut()}
         />
         <div className="app-content">
-          {page === 'clientes' ? (
+          {!paginaLiberada ? (
+            <PlaceholderPage title="Acesso restrito" subtitle="Você não tem permissão para acessar esta área." />
+          ) : page === 'clientes' ? (
             <ClientesPage />
           ) : page === 'dashboard' ? (
             <Dashboard />

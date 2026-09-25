@@ -87,7 +87,7 @@ export default function ComercialPage() {
 
   useEffect(() => {
     loadData()
-    supabase.from('equipe').select('id, nome, area, email, vende').order('nome').then(({ data }) => setEquipe(data || []))
+    supabase.from('equipe').select('id, nome, area, email, vende, acesso_total').order('nome').then(({ data }) => setEquipe(data || []))
     supabase.auth.getSession().then(({ data }) => setUserEmail(data?.session?.user?.email || ''))
   }, [loadData])
 
@@ -95,7 +95,7 @@ export default function ComercialPage() {
   const responsaveisPosVendas = useMemo(() => equipe.filter((e) => e.area === 'Pós-Vendas'), [equipe])
   const souGestao = useMemo(() => {
     const eu = equipe.find((e) => e.email === userEmail)
-    return !eu || eu.area === 'Liderança'
+    return !eu || eu.area === 'Liderança' || eu.acesso_total
   }, [equipe, userEmail])
 
   const kpis = useMemo(() => {

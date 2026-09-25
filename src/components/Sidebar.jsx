@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   LayoutDashboard,
   Users,
@@ -38,7 +38,19 @@ const MENU = [
   { key: 'playbook-group', label: 'Playbook', icon: BookOpen, children: PLAYBOOK_CHILDREN, defaultKey: 'playbook-comercial' },
 ]
 
-export default function Sidebar({ current, onNavigate }) {
+export default function Sidebar({ current, onNavigate, apenasComercial, ocultarComercial }) {
+  const menu = useMemo(() => {
+    if (apenasComercial) {
+      return MENU
+        .filter((item) => ['equipe', 'cultura', 'comercial', 'playbook-group'].includes(item.key))
+        .map((item) => (item.key === 'playbook-group'
+          ? { ...item, children: item.children.filter((c) => c.key === 'playbook-comercial') }
+          : item))
+    }
+    if (ocultarComercial) return MENU.filter((item) => item.key !== 'comercial')
+    return MENU
+  }, [apenasComercial, ocultarComercial])
+
   const [abertos, setAbertos] = useState(() => {
     const init = {}
     for (const item of MENU) {
@@ -63,7 +75,7 @@ export default function Sidebar({ current, onNavigate }) {
       </div>
 
       <nav className="sidebar-nav">
-        {MENU.map((item) => {
+        {menu.map((item) => {
           const Icon = item.icon
 
           if (item.children) {

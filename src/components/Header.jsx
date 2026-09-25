@@ -47,7 +47,7 @@ export default function Header({ pageLabel, userEmail, onLogout }) {
 
   return (
     <header className="header">
-      <div className="header-breadcrumb">{areaLabel ? `${areaLabel} | XEQUE MATE` : 'XEQUE MATE'}</div>
+      {areaLabel && <div className="header-breadcrumb">{areaLabel}</div>}
 
       <div className="header-search">
         <Search size={16} />

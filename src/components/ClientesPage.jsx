@@ -261,7 +261,7 @@ export default function ClientesPage() {
           onChange={(e) => setResponsavelFiltro(e.target.value)}
         >
           <option value="todos">Todos os responsáveis</option>
-          {responsaveis.map((r) => (
+          {responsaveisPosVendas.map((r) => (
             <option key={r.id} value={String(r.id)}>
               {r.nome}
             </option>
