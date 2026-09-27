@@ -271,3 +271,38 @@ export const NPS_ORIGEM_OPCOES = [
   'Pré-cancelamento',
   'Pesquisa periódica',
 ]
+
+// ---- Régua de boletos ----
+
+export const BOLETO_STATUS_LABELS = {
+  a_enviar: 'A enviar',
+  enviado: 'Enviado',
+  aguardando_pagamento: 'Aguardando pagamento',
+  pago: 'Pago',
+  em_atraso: 'Em atraso',
+  promessa_pagamento: 'Promessa de pagamento',
+}
+
+export const BOLETO_STATUS_BADGE_CLASS = {
+  a_enviar: 'badge-neutral',
+  enviado: 'badge-blue',
+  aguardando_pagamento: 'badge-orange',
+  pago: 'badge-green',
+  em_atraso: 'badge-red',
+  promessa_pagamento: 'badge-orange',
+}
+
+// "Aguardando pagamento" é um recorte de "enviado" cujo vencimento já passou — não é um valor
+// salvo no banco, é calculado aqui pra não duplicar o significado de "enviado".
+export function statusVisualBoleto(ciclo) {
+  const hoje = new Date().toISOString().slice(0, 10)
+  if (ciclo.status === 'enviado' && ciclo.vencimento < hoje) return 'aguardando_pagamento'
+  return ciclo.status
+}
+
+export function diasAtrasoBoleto(vencimento) {
+  const hoje = new Date()
+  hoje.setHours(0, 0, 0, 0)
+  const venc = new Date(vencimento + 'T00:00:00')
+  return Math.max(0, Math.round((hoje - venc) / 86400000))
+}

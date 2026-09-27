@@ -7,6 +7,7 @@ import Dashboard from './components/Dashboard.jsx'
 import EquipePage from './components/EquipePage.jsx'
 import CulturaPage from './components/CulturaPage.jsx'
 import TarefasPage from './components/TarefasPage.jsx'
+import BoletosPage from './components/BoletosPage.jsx'
 import ReversaoPage from './components/ReversaoPage.jsx'
 import IndicacoesPage from './components/IndicacoesPage.jsx'
 import ContempladosPage from './components/ContempladosPage.jsx'
@@ -114,7 +115,7 @@ export default function App() {
           ) : page === 'tarefas' ? (
             <TarefasPage data={navParams.data} status={navParams.status} />
           ) : page === 'tarefas-boletos' ? (
-            <TarefasPage categoriaFixa="Boleto" />
+            <BoletosPage />
           ) : page === 'comercial' ? (
             <ComercialPage />
           ) : page === 'reversao' ? (
