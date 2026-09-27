@@ -13,6 +13,10 @@ import {
   FINANCEIRO_LABELS,
   STATUS_DOCUMENTACAO_LABELS,
   ACOMPANHAMENTO_STATUS_LABELS,
+  classificarNps,
+  NPS_CLASSIFICACAO_LABELS,
+  NPS_CLASSIFICACAO_BADGE_CLASS,
+  NPS_ORIGEM_OPCOES,
 } from '../lib/negocio.js'
 
 const CAMPOS_AUDITAVEIS = {
@@ -33,6 +37,7 @@ const TABS = [
   { key: 'financeiro', label: 'Status financeiro' },
   { key: 'acompanhamento', label: 'Onboarding' },
   { key: 'contemplacao', label: 'Contemplação' },
+  { key: 'experiencia', label: 'Experiência do cliente', requerEdit: true },
   { key: 'tarefas', label: 'Tarefas', requerEdit: true },
   { key: 'historico', label: 'Histórico', requerEdit: true },
 ]
@@ -117,6 +122,18 @@ export default function ClientModal({ client, responsaveisPosVendas, vendedores,
   const [savingObs, setSavingObs] = useState(false)
   const [meuNome, setMeuNome] = useState('')
 
+  const [npsAvaliacoes, setNpsAvaliacoes] = useState([])
+  const [savingNps, setSavingNps] = useState(false)
+  const [novoNps, setNovoNps] = useState({
+    nota: '',
+    data_pesquisa: new Date().toISOString().slice(0, 10),
+    avaliacao_pos_venda: '',
+    feedback: '',
+    ponto_melhoria: '',
+    responsavel_id: '',
+    origem: '',
+  })
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       const userEmail = data?.session?.user?.email
@@ -162,9 +179,23 @@ export default function ClientModal({ client, responsaveisPosVendas, vendedores,
       })
   }
 
+  function loadNps() {
+    if (!isEdit) return
+    supabase
+      .from('nps_avaliacoes')
+      .select('*, responsavel:equipe(id, nome)')
+      .eq('cliente_id', client.id)
+      .order('data_pesquisa', { ascending: false })
+      .then(({ data, error: loadError }) => {
+        if (loadError) setError(loadError.message)
+        setNpsAvaliacoes(data || [])
+      })
+  }
+
   useEffect(() => {
     if (tab === 'tarefas') loadTarefas()
     if (tab === 'historico') loadHistorico()
+    if (tab === 'experiencia') loadNps()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab])
 
@@ -317,6 +348,52 @@ export default function ClientModal({ client, responsaveisPosVendas, vendedores,
       setNovaObservacao('')
       loadHistorico()
     }
+  }
+
+  async function handleAddNps() {
+    if (novoNps.nota === '') return
+    setSavingNps(true)
+    setError(null)
+
+    const nota = Number(novoNps.nota)
+    const classificacao = classificarNps(nota)
+
+    const { error: npsError } = await supabase.from('nps_avaliacoes').insert({
+      cliente_id: client.id,
+      nota,
+      data_pesquisa: novoNps.data_pesquisa || new Date().toISOString().slice(0, 10),
+      avaliacao_pos_venda: novoNps.avaliacao_pos_venda === '' ? null : Number(novoNps.avaliacao_pos_venda),
+      feedback: novoNps.feedback.trim() || null,
+      ponto_melhoria: novoNps.ponto_melhoria.trim() || null,
+      responsavel_id: novoNps.responsavel_id || null,
+      origem: novoNps.origem || null,
+      criado_por: meuNome || null,
+    })
+
+    if (npsError) {
+      setSavingNps(false)
+      setError(npsError.message)
+      return
+    }
+
+    await supabase.from('historico').insert({
+      cliente_id: client.id,
+      tipo: 'nps',
+      descricao: `Pesquisa NPS registrada: nota ${nota} (${NPS_CLASSIFICACAO_LABELS[classificacao]})`,
+      usuario: meuNome || null,
+    })
+
+    setSavingNps(false)
+    setNovoNps({
+      nota: '',
+      data_pesquisa: new Date().toISOString().slice(0, 10),
+      avaliacao_pos_venda: '',
+      feedback: '',
+      ponto_melhoria: '',
+      responsavel_id: '',
+      origem: '',
+    })
+    loadNps()
   }
 
   const diasAtraso = isEdit ? calcularDiasAtraso({ ...client, ...form }) : null
@@ -784,6 +861,129 @@ export default function ClientModal({ client, responsaveisPosVendas, vendedores,
             </div>
           )}
 
+          {tab === 'experiencia' && isEdit && (
+            <div className="modal-subtab-content">
+              <div className="modal-hint">
+                Registre aqui cada pesquisa de satisfação (NPS) feita com o cliente. Nota 0–6 vira Detrator e
+                cria automaticamente uma tarefa de contato prioritário; 7–8 vira Neutro e cria uma tarefa de
+                análise de melhoria; 9–10 vira Promotor, sem tarefa.
+              </div>
+
+              <div className="modal-form-row">
+                <label>
+                  Nota (0 a 10)
+                  <select value={novoNps.nota} onChange={(e) => setNovoNps((f) => ({ ...f, nota: e.target.value }))}>
+                    <option value="">—</option>
+                    {Array.from({ length: 11 }, (_, i) => (
+                      <option key={i} value={i}>{i}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Data da pesquisa
+                  <input
+                    type="date"
+                    value={novoNps.data_pesquisa}
+                    onChange={(e) => setNovoNps((f) => ({ ...f, data_pesquisa: e.target.value }))}
+                  />
+                </label>
+              </div>
+
+              <div className="modal-form-row">
+                <label>
+                  Avaliação do Pós-Vendas (1 a 5)
+                  <select
+                    value={novoNps.avaliacao_pos_venda}
+                    onChange={(e) => setNovoNps((f) => ({ ...f, avaliacao_pos_venda: e.target.value }))}
+                  >
+                    <option value="">—</option>
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <option key={n} value={n}>{n}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Origem da pesquisa
+                  <select value={novoNps.origem} onChange={(e) => setNovoNps((f) => ({ ...f, origem: e.target.value }))}>
+                    <option value="">—</option>
+                    {NPS_ORIGEM_OPCOES.map((o) => (
+                      <option key={o} value={o}>{o}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <div className="modal-form-row">
+                <label>
+                  Responsável pelo atendimento
+                  <select
+                    value={novoNps.responsavel_id}
+                    onChange={(e) => setNovoNps((f) => ({ ...f, responsavel_id: e.target.value }))}
+                  >
+                    <option value="">—</option>
+                    {responsaveisPosVendas.map((r) => (
+                      <option key={r.id} value={r.id}>{r.nome}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <label>
+                Feedback do cliente
+                <textarea
+                  value={novoNps.feedback}
+                  onChange={(e) => setNovoNps((f) => ({ ...f, feedback: e.target.value }))}
+                  rows={2}
+                />
+              </label>
+
+              <label>
+                Ponto de melhoria
+                <textarea
+                  value={novoNps.ponto_melhoria}
+                  onChange={(e) => setNovoNps((f) => ({ ...f, ponto_melhoria: e.target.value }))}
+                  rows={2}
+                />
+              </label>
+
+              <button
+                type="button"
+                className="btn-secondary modal-subtab-add"
+                onClick={handleAddNps}
+                disabled={savingNps || novoNps.nota === ''}
+              >
+                <Plus size={14} /> {savingNps ? 'Salvando...' : 'Registrar avaliação'}
+              </button>
+
+              {npsAvaliacoes.length === 0 ? (
+                <div className="table-empty">Nenhuma avaliação registrada ainda.</div>
+              ) : (
+                <div className="historico-list">
+                  {npsAvaliacoes.map((n) => {
+                    const classificacao = classificarNps(n.nota)
+                    return (
+                      <div className="historico-item" key={n.id}>
+                        <div className="historico-data">
+                          {formatarData(n.data_pesquisa)}
+                          {n.origem && ` · ${n.origem}`}
+                          {n.responsavel?.nome && ` · ${n.responsavel.nome}`}
+                        </div>
+                        <div className="historico-descricao">
+                          <span className={`badge ${NPS_CLASSIFICACAO_BADGE_CLASS[classificacao]}`} style={{ marginRight: 8 }}>
+                            NOTA {n.nota} — {NPS_CLASSIFICACAO_LABELS[classificacao].toUpperCase()}
+                          </span>
+                          {n.avaliacao_pos_venda && ` Pós-vendas: ${n.avaliacao_pos_venda}/5.`}
+                          {n.feedback && ` Feedback: ${n.feedback}`}
+                          {n.ponto_melhoria && ` Melhoria: ${n.ponto_melhoria}`}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
           {tab === 'historico' && isEdit && (
             <div className="modal-subtab-content">
               <div className="modal-form-row modal-obs-add">
@@ -809,6 +1009,7 @@ export default function ClientModal({ client, responsaveisPosVendas, vendedores,
                       </div>
                       <div className="historico-descricao">
                         {h.tipo === 'auditoria' && <span className="badge badge-neutral" style={{ marginRight: 8 }}>AUDITORIA</span>}
+                        {h.tipo === 'nps' && <span className="badge badge-blue" style={{ marginRight: 8 }}>NPS</span>}
                         {h.descricao}
                       </div>
                     </div>
@@ -820,7 +1021,7 @@ export default function ClientModal({ client, responsaveisPosVendas, vendedores,
 
           {error && <div className="modal-error">{error}</div>}
 
-          {!['tarefas', 'historico'].includes(tab) && (
+          {!['tarefas', 'historico', 'experiencia'].includes(tab) && (
             <div className="modal-actions">
               <button type="button" className="btn-secondary" onClick={onClose}>
                 Cancelar

@@ -234,3 +234,40 @@ export const LEAD_TEMPERATURA_COLOR = {
 }
 
 export const TIPOS_CONTATO_LEAD = ['Ligação', 'WhatsApp', 'E-mail', 'Presencial', 'Outro']
+
+// ---- Experiência do cliente (NPS) ----
+
+export function classificarNps(nota) {
+  if (nota === null || nota === undefined || nota === '') return null
+  const n = Number(nota)
+  if (n <= 6) return 'detrator'
+  if (n <= 8) return 'neutro'
+  return 'promotor'
+}
+
+export const NPS_CLASSIFICACAO_LABELS = {
+  detrator: 'Detrator',
+  neutro: 'Neutro',
+  promotor: 'Promotor',
+}
+
+export const NPS_CLASSIFICACAO_COLOR = {
+  detrator: 'var(--red)',
+  neutro: 'var(--orange)',
+  promotor: 'var(--green)',
+}
+
+export const NPS_CLASSIFICACAO_BADGE_CLASS = {
+  detrator: 'badge-red',
+  neutro: 'badge-orange',
+  promotor: 'badge-green',
+}
+
+export const NPS_ORIGEM_OPCOES = [
+  'Onboarding',
+  'Acompanhamento',
+  'Pós-assembleia',
+  'Pós-contemplação',
+  'Pré-cancelamento',
+  'Pesquisa periódica',
+]
