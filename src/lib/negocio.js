@@ -306,3 +306,28 @@ export function diasAtrasoBoleto(vencimento) {
   const venc = new Date(vencimento + 'T00:00:00')
   return Math.max(0, Math.round((hoje - venc) / 86400000))
 }
+
+// ---- Acompanhamento Pós-Vendas (conteúdo/relacionamento) ----
+
+export const TIPOS_CONTEUDO_POS_VENDAS = [
+  { key: 'resultado_assembleia', label: 'Resultado de assembleia', exemplo: 'Pessoal, passando para compartilhar o resultado da assembleia de hoje e lembrar vocês de acompanharem suas cotas…' },
+  { key: 'lembrete_pagamento', label: 'Lembrete de pagamento', exemplo: 'Passando para lembrar quem tem vencimento próximo. Se precisar do boleto ou tiver qualquer dificuldade, chama a gente.' },
+  { key: 'lance', label: 'Lance', exemplo: 'Você sabe como funciona o lance no consórcio? Hoje vou explicar rapidinho…' },
+  { key: 'contemplacao', label: 'Contemplação', exemplo: 'Foi contemplado? Entenda quais são os próximos passos…' },
+  { key: 'educacao', label: 'Educação', exemplo: 'Você sabia que existem diferentes estratégias para utilizar o lance?' },
+  { key: 'bastidores', label: 'Bastidores', exemplo: 'Mostrar equipe, atendimento, organização e acompanhamento.' },
+  { key: 'relacionamento', label: 'Relacionamento', exemplo: 'Como está seu projeto da Kawasaki? Alguma dúvida que podemos ajudar a resolver?' },
+]
+
+export const TIPOS_CONTEUDO_LABELS = Object.fromEntries(TIPOS_CONTEUDO_POS_VENDAS.map((t) => [t.key, t.label]))
+
+export const CANAIS_CONTEUDO = ['Texto', 'Vídeo', 'Áudio', 'Imagem']
+
+export const IDEIAS_CONTEUDO_POS_VENDAS = [
+  '3 coisas que todo cliente deveria saber antes da assembleia.',
+  'Você sabe o que acontece depois que é contemplado?',
+  'Lance embutido: quando ele pode fazer sentido?',
+  'O que fazer quando a parcela apertou?',
+  'Por que seu Pós-Vendas é importante depois da contratação?',
+  'O que nossa equipe acompanha enquanto você espera sua contemplação?',
+]

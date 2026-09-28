@@ -1,14 +1,18 @@
 import { useState } from 'react'
 import { X, Trash2 } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
+import { TIPOS_CONTEUDO_POS_VENDAS, CANAIS_CONTEUDO } from '../lib/negocio.js'
 import './ClientModal.css'
 
-export default function TarefaModal({ tarefa, clientes, responsaveis, presetClienteId, presetCategoria, presetResponsavelId, onClose, onSaved, onDeleted }) {
+export default function TarefaModal({
+  tarefa, clientes, responsaveis, presetClienteId, presetCategoria, presetResponsavelId,
+  presetTitulo, presetTipoConteudo, onClose, onSaved, onDeleted,
+}) {
   const isEdit = Boolean(tarefa)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [form, setForm] = useState({
-    titulo: tarefa?.titulo || '',
+    titulo: tarefa?.titulo || presetTitulo || '',
     descricao: tarefa?.descricao || '',
     cliente_id: tarefa?.cliente_id || presetClienteId || '',
     responsavel_id: tarefa?.responsavel_id || presetResponsavelId || '',
@@ -18,6 +22,8 @@ export default function TarefaModal({ tarefa, clientes, responsaveis, presetClie
     status: tarefa?.status || 'pendente',
     categoria: tarefa?.categoria || presetCategoria || '',
     observacao: tarefa?.observacao || '',
+    tipo_conteudo: tarefa?.tipo_conteudo || presetTipoConteudo || '',
+    canal: tarefa?.canal || '',
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
@@ -48,6 +54,8 @@ export default function TarefaModal({ tarefa, clientes, responsaveis, presetClie
       categoria: form.categoria.trim() || null,
       observacao: form.observacao.trim() || null,
       data_conclusao: form.status === 'concluida' ? (tarefa?.data_conclusao || new Date().toISOString().slice(0, 10)) : null,
+      tipo_conteudo: form.tipo_conteudo || null,
+      canal: form.canal || null,
     }
 
     const query = isEdit
@@ -194,6 +202,29 @@ export default function TarefaModal({ tarefa, clientes, responsaveis, presetClie
               placeholder="Ex: Boleto, Onboarding, Relacionamento"
             />
           </label>
+
+          {form.categoria === 'Pós-Vendas' && (
+            <div className="modal-form-row">
+              <label>
+                Tipo de conteúdo
+                <select value={form.tipo_conteudo} onChange={(e) => update('tipo_conteudo', e.target.value)}>
+                  <option value="">—</option>
+                  {TIPOS_CONTEUDO_POS_VENDAS.map((t) => (
+                    <option key={t.key} value={t.key}>{t.label}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Canal
+                <select value={form.canal} onChange={(e) => update('canal', e.target.value)}>
+                  <option value="">—</option>
+                  {CANAIS_CONTEUDO.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          )}
 
           <label>
             Observação

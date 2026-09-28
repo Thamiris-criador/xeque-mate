@@ -8,6 +8,8 @@ import EquipePage from './components/EquipePage.jsx'
 import CulturaPage from './components/CulturaPage.jsx'
 import TarefasPage from './components/TarefasPage.jsx'
 import BoletosPage from './components/BoletosPage.jsx'
+import AcompanhamentoPosVendasPage from './components/AcompanhamentoPosVendasPage.jsx'
+import ReversaoComercialPage from './components/ReversaoComercialPage.jsx'
 import ReversaoPage from './components/ReversaoPage.jsx'
 import IndicacoesPage from './components/IndicacoesPage.jsx'
 import ContempladosPage from './components/ContempladosPage.jsx'
@@ -26,6 +28,8 @@ const PAGE_TITLES = {
   cultura: 'Cultura',
   tarefas: 'Tarefas',
   'tarefas-boletos': 'Boletos',
+  'tarefas-pos-vendas': 'Acompanhamento Pós-Vendas',
+  'tarefas-reversao-comercial': 'Reversão / Cancelados e Comercial',
   comercial: 'Comercial',
   clientes: 'Clientes',
   financeiro: 'Financeiro',
@@ -116,6 +120,10 @@ export default function App() {
             <TarefasPage data={navParams.data} status={navParams.status} />
           ) : page === 'tarefas-boletos' ? (
             <BoletosPage />
+          ) : page === 'tarefas-pos-vendas' ? (
+            <AcompanhamentoPosVendasPage />
+          ) : page === 'tarefas-reversao-comercial' ? (
+            <ReversaoComercialPage isAdmin={isAdmin} />
           ) : page === 'comercial' ? (
             <ComercialPage />
           ) : page === 'reversao' ? (

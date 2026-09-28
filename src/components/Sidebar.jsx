@@ -29,6 +29,8 @@ const PLAYBOOK_CHILDREN = [
 const TAREFAS_CHILDREN = [
   { key: 'tarefas', label: 'Todas as tarefas' },
   { key: 'tarefas-boletos', label: 'Boletos' },
+  { key: 'tarefas-pos-vendas', label: 'Acompanhamento Pós-Vendas' },
+  { key: 'tarefas-reversao-comercial', label: 'Reversão / Cancelados e Comercial' },
 ]
 
 const MENU = [
