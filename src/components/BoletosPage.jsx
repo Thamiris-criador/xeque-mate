@@ -125,7 +125,7 @@ export default function BoletosPage() {
 
       <DicaBanner
         icon={Receipt}
-        texto="Assim que você marcar um boleto como pago, o sistema já cria sozinho a tarefa de enviar a oferta de lance — não precisa lembrar disso na mão. E se o vencimento passar sem confirmação, o cliente já vira 'Em atraso' automaticamente com uma tarefa de contato pronta pro Gabriel."
+        texto="Assim que você marcar um boleto como pago, o sistema já cria sozinho a tarefa de enviar a oferta de lance para o Gabriel — não precisa lembrar disso na mão. E se o vencimento passar sem confirmação, o cliente já vira 'Em atraso' automaticamente, com a tarefa de contato pronta para o Gabriel."
       />
 
       <div className="kpi-grid">

@@ -36,7 +36,7 @@ export default function TarefasPage({ data: dataInicial, status: statusInicial }
   const [error, setError] = useState(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
-  const [visualizacao, setVisualizacao] = useState('lista')
+  const [visualizacao, setVisualizacao] = useState('kanban')
 
   const [filtroData, setFiltroData] = useState(dataInicial || 'todas')
   const [filtroResponsavel, setFiltroResponsavel] = useState('todos')

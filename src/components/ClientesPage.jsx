@@ -76,8 +76,8 @@ function ProximaAcaoBadge({ value }) {
   return <span className="proxima-acao-text">{value}</span>
 }
 
-export default function ClientesPage({ isAdmin }) {
-  const [tab, setTab] = useState('todos')
+export default function ClientesPage({ isAdmin, tabInicial }) {
+  const [tab, setTab] = useState(tabInicial || 'todos')
   const [search, setSearch] = useState('')
   const [responsavelFiltro, setResponsavelFiltro] = useState('todos')
   const [clientes, setClientes] = useState([])

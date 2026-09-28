@@ -3,7 +3,7 @@ import {
   CheckCircle2, AlertTriangle, Handshake, CalendarClock,
   Wallet, XCircle, RotateCcw, Gift,
 } from 'lucide-react'
-import { ResponsiveContainer, BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts'
+import { ResponsiveContainer, BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie } from 'recharts'
 import { supabase } from '../lib/supabase.js'
 import { BRINDES_OPCOES, formatarData } from '../lib/negocio.js'
 import './Dashboard.css'
@@ -34,12 +34,12 @@ function StatTile({ icon: Icon, label, value, color, hint }) {
 
 function ChartTooltip({ active, payload }) {
   if (!active || !payload || !payload.length) return null
-  const { nome, valor } = payload[0].payload
+  const { nome, valor, pct } = payload[0].payload
   return (
     <div className="chart-tooltip">
       <div className="chart-tooltip-title">{nome}</div>
       <div className="chart-tooltip-row">
-        <strong>{valor}</strong> cliente(s)
+        <strong>{valor}</strong> cliente(s) ({pct}%)
       </div>
     </div>
   )
@@ -63,6 +63,7 @@ export default function FinanceiroPage() {
   const [error, setError] = useState(null)
   const [dataInicio, setDataInicio] = useState('')
   const [dataFim, setDataFim] = useState('')
+  const [graficoStatus, setGraficoStatus] = useState('barra')
 
   useEffect(() => {
     Promise.all([
@@ -114,8 +115,10 @@ export default function FinanceiroPage() {
     for (const c of clientes) {
       if (contagem[c.financeiro_status] !== undefined) contagem[c.financeiro_status] += 1
     }
+    const total = clientes.length || 1
     return FINANCEIRO_STATUS_ORDER.map((key) => ({
       key, nome: FINANCEIRO_STATUS_META[key].label, valor: contagem[key],
+      pct: Math.round((contagem[key] / total) * 100),
     }))
   }, [clientes])
 
@@ -211,19 +214,61 @@ export default function FinanceiroPage() {
 
           <div className="dashboard-section-title">Distribuição por status financeiro</div>
           <div className="chart-card">
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={distribuicaoStatus} margin={{ top: 8, right: 12, left: -12, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                <XAxis dataKey="nome" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={{ stroke: 'var(--border)' }} />
-                <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
-                <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--bg-hover)' }} />
-                <Bar dataKey="valor" radius={[4, 4, 0, 0]} barSize={56}>
+            <div className="chart-card-title-row">
+              <div />
+              <div className="chart-toggle">
+                <button
+                  type="button"
+                  className={`chart-toggle-btn${graficoStatus === 'barra' ? ' active' : ''}`}
+                  onClick={() => setGraficoStatus('barra')}
+                >
+                  Barra
+                </button>
+                <button
+                  type="button"
+                  className={`chart-toggle-btn${graficoStatus === 'pizza' ? ' active' : ''}`}
+                  onClick={() => setGraficoStatus('pizza')}
+                >
+                  Pizza
+                </button>
+              </div>
+            </div>
+            {graficoStatus === 'barra' ? (
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={distribuicaoStatus} margin={{ top: 8, right: 12, left: -12, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                  <XAxis dataKey="nome" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={{ stroke: 'var(--border)' }} />
+                  <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
+                  <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--bg-hover)' }} />
+                  <Bar dataKey="valor" radius={[4, 4, 0, 0]} barSize={56}>
+                    {distribuicaoStatus.map((d) => (
+                      <Cell key={d.key} fill={FINANCEIRO_STATUS_META[d.key].color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <>
+                <ResponsiveContainer width="100%" height={240}>
+                  <PieChart>
+                    <Tooltip content={<ChartTooltip />} />
+                    <Pie data={distribuicaoStatus} dataKey="valor" nameKey="nome" cx="50%" cy="50%" outerRadius={85} paddingAngle={2}>
+                      {distribuicaoStatus.map((d) => (
+                        <Cell key={d.key} fill={FINANCEIRO_STATUS_META[d.key].color} stroke="var(--bg-card)" strokeWidth={2} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="chart-legend">
                   {distribuicaoStatus.map((d) => (
-                    <Cell key={d.key} fill={FINANCEIRO_STATUS_META[d.key].color} />
+                    <div className="chart-legend-item" key={d.key}>
+                      <span className="chart-legend-dot" style={{ background: FINANCEIRO_STATUS_META[d.key].color }} />
+                      {d.nome} ({d.pct}%)
+                    </div>
                   ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+                </div>
+              </>
+            )}
           </div>
 
           <div className="dashboard-section-title">Brindes a entregar</div>

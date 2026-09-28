@@ -53,6 +53,7 @@ function StatTile({ icon: Icon, label, value, color, hint, onClick }) {
 
 function ChartTooltip({ active, payload, label }) {
   if (!active || !payload || !payload.length) return null
+  const totalBarra = payload.reduce((s, p) => s + p.value, 0) || 1
   return (
     <div className="chart-tooltip">
       <div className="chart-tooltip-title">{label}</div>
@@ -61,20 +62,22 @@ function ChartTooltip({ active, payload, label }) {
         .map((p) => (
           <div className="chart-tooltip-row" key={p.dataKey}>
             <span className="chart-tooltip-dot" style={{ background: p.color }} />
-            {STATUS_META[p.dataKey]?.label || p.dataKey}: <strong>{p.value}</strong>
+            {STATUS_META[p.dataKey]?.label || p.dataKey}: <strong>{p.value}</strong> ({Math.round((p.value / totalBarra) * 100)}%)
           </div>
         ))}
     </div>
   )
 }
 
-function StatusLegend() {
+function StatusLegend({ byStatus }) {
+  const total = byStatus ? Object.values(byStatus).reduce((s, v) => s + v, 0) || 1 : null
   return (
     <div className="chart-legend">
       {STATUS_ORDER.map((key) => (
         <div className="chart-legend-item" key={key}>
           <span className="chart-legend-dot" style={{ background: STATUS_META[key].color }} />
           {STATUS_META[key].label}
+          {byStatus && ` (${Math.round((byStatus[key] / total) * 100)}%)`}
         </div>
       ))}
     </div>
@@ -190,10 +193,15 @@ export default function Dashboard({ onNavigate }) {
     return Array.from(map.values()).sort((a, b) => b.em_dia + b.inadimplente + b.cancelado - (a.em_dia + a.inadimplente + a.cancelado))
   }, [clientes])
 
-  const totalPorResponsavel = useMemo(
-    () => porResponsavel.map((r) => ({ nome: r.nome, total: r.em_dia + r.inadimplente + r.cancelado })),
-    [porResponsavel]
-  )
+  const totalPorResponsavel = useMemo(() => {
+    const linhas = porResponsavel.map((r) => ({ nome: r.nome, total: r.em_dia + r.inadimplente + r.cancelado }))
+    const somaGeral = linhas.reduce((s, r) => s + r.total, 0) || 1
+    return linhas.map((r, i) => ({
+      ...r,
+      pct: Math.round((r.total / somaGeral) * 100),
+      fill: PALETA_RESPONSAVEL[i % PALETA_RESPONSAVEL.length],
+    }))
+  }, [porResponsavel])
 
   return (
     <div>
@@ -224,11 +232,11 @@ export default function Dashboard({ onNavigate }) {
 
           <div className="dashboard-section-title">Clientes</div>
           <div className="stat-tiles-row">
-            <StatTile icon={Users} label="Novos clientes" value={metrics.novosClientes} color="var(--blue)" />
-            <StatTile icon={PhoneCall} label="Clientes contatados" value={metrics.clientesContatados} color="var(--green)" />
-            <StatTile icon={AlertTriangle} label="Clientes inadimplentes" value={metrics.inadimplentes} color="var(--red)" />
-            <StatTile icon={XCircle} label="Cancelamentos" value={metrics.cancelamentos} color="var(--red)" />
-            <StatTile icon={Award} label="Clientes contemplados" value={metrics.contempladosPeriodo} color="var(--red)" />
+            <StatTile icon={Users} label="Novos clientes" value={metrics.novosClientes} color="var(--blue)" onClick={() => onNavigate?.('clientes', { tab: 'todos' })} />
+            <StatTile icon={PhoneCall} label="Clientes contatados" value={metrics.clientesContatados} color="var(--green)" onClick={() => onNavigate?.('clientes', { tab: 'todos' })} />
+            <StatTile icon={AlertTriangle} label="Clientes inadimplentes" value={metrics.inadimplentes} color="var(--red)" onClick={() => onNavigate?.('clientes', { tab: 'inadimplentes' })} />
+            <StatTile icon={XCircle} label="Cancelamentos" value={metrics.cancelamentos} color="var(--red)" onClick={() => onNavigate?.('clientes', { tab: 'cancelados' })} />
+            <StatTile icon={Award} label="Clientes contemplados" value={metrics.contempladosPeriodo} color="var(--red)" onClick={() => onNavigate?.('clientes', { tab: 'contemplados' })} />
           </div>
 
           <div className="dashboard-section-title">Pendências e tarefas</div>
@@ -331,14 +339,19 @@ export default function Dashboard({ onNavigate }) {
                           <div className="chart-tooltip">
                             <div className="chart-tooltip-row">
                               <span className="chart-tooltip-dot" style={{ background: p.payload.fill }} />
-                              {p.name}: <strong>{p.value}</strong>
+                              {p.name}: <strong>{p.value}</strong> ({p.payload.pct}%)
                             </div>
                           </div>
                         )
                       }}
                     />
                     <Pie
-                      data={STATUS_ORDER.map((key) => ({ nome: STATUS_META[key].label, valor: totals.byStatus[key], fill: STATUS_META[key].color }))}
+                      data={STATUS_ORDER.map((key) => ({
+                        nome: STATUS_META[key].label,
+                        valor: totals.byStatus[key],
+                        fill: STATUS_META[key].color,
+                        pct: Math.round((totals.byStatus[key] / (totals.total || 1)) * 100),
+                      }))}
                       dataKey="valor"
                       nameKey="nome"
                       cx="50%"
@@ -353,7 +366,7 @@ export default function Dashboard({ onNavigate }) {
                   </PieChart>
                 </ResponsiveContainer>
               )}
-              <StatusLegend />
+              <StatusLegend byStatus={totals.byStatus} />
             </div>
 
             <div className="chart-card">
@@ -410,7 +423,7 @@ export default function Dashboard({ onNavigate }) {
                             <div className="chart-tooltip">
                               <div className="chart-tooltip-row">
                                 <span className="chart-tooltip-dot" style={{ background: p.payload.fill }} />
-                                {p.name}: <strong>{p.value}</strong>
+                                {p.name}: <strong>{p.value}</strong> ({p.payload.pct}%)
                               </div>
                             </div>
                           )
@@ -425,17 +438,17 @@ export default function Dashboard({ onNavigate }) {
                         outerRadius={80}
                         paddingAngle={2}
                       >
-                        {totalPorResponsavel.map((r, i) => (
-                          <Cell key={r.nome} fill={PALETA_RESPONSAVEL[i % PALETA_RESPONSAVEL.length]} stroke="var(--bg-card)" strokeWidth={2} />
+                        {totalPorResponsavel.map((r) => (
+                          <Cell key={r.nome} fill={r.fill} stroke="var(--bg-card)" strokeWidth={2} />
                         ))}
                       </Pie>
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="chart-legend">
-                    {totalPorResponsavel.map((r, i) => (
+                    {totalPorResponsavel.map((r) => (
                       <div className="chart-legend-item" key={r.nome}>
-                        <span className="chart-legend-dot" style={{ background: PALETA_RESPONSAVEL[i % PALETA_RESPONSAVEL.length] }} />
-                        {r.nome} ({r.total})
+                        <span className="chart-legend-dot" style={{ background: r.fill }} />
+                        {r.nome} ({r.total} · {r.pct}%)
                       </div>
                     ))}
                   </div>

@@ -109,7 +109,7 @@ export default function App() {
           {!paginaLiberada ? (
             <PlaceholderPage title="Acesso restrito" subtitle="Você não tem permissão para acessar esta área." />
           ) : page === 'clientes' ? (
-            <ClientesPage isAdmin={isAdmin} />
+            <ClientesPage isAdmin={isAdmin} tabInicial={navParams.tab} />
           ) : page === 'dashboard' ? (
             <Dashboard onNavigate={irPara} />
           ) : page === 'equipe' ? (
