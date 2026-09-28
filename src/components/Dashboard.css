@@ -13,6 +13,32 @@
   margin: 0 0 12px;
 }
 
+.acoes-kanban {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+  align-items: start;
+}
+
+.acoes-coluna {
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.acoes-coluna-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--border);
+}
+
 .stat-tile {
   background: var(--bg-card);
   border: 1px solid var(--border);

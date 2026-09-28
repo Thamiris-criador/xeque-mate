@@ -22,6 +22,7 @@ import { UserRound } from 'lucide-react'
 import TarefaModal from './TarefaModal.jsx'
 import './Dashboard.css'
 import './EquipePage.css'
+import './TarefasPage.css'
 
 const STATUS_ORDER = ['em_dia', 'inadimplente', 'cancelado']
 
@@ -94,6 +95,7 @@ export default function Dashboard({ onNavigate }) {
   const [periodo, setPeriodo] = useState('semana')
   const [graficoResponsavel, setGraficoResponsavel] = useState('barra')
   const [graficoDistribuicao, setGraficoDistribuicao] = useState('barra')
+  const [visualizacaoAcoes, setVisualizacaoAcoes] = useState('kanban')
   const [equipe, setEquipe] = useState([])
   const [editingTarefa, setEditingTarefa] = useState(null)
 
@@ -203,6 +205,20 @@ export default function Dashboard({ onNavigate }) {
     }))
   }, [porResponsavel])
 
+  const acoesPorResponsavel = useMemo(() => {
+    const map = new Map()
+    for (const t of metrics.proximasAcoes) {
+      const nome = t.responsavel?.nome || 'Sem responsável'
+      if (!map.has(nome)) map.set(nome, { nome, pessoa: t.responsavel, tarefas: [] })
+      map.get(nome).tarefas.push(t)
+    }
+    return Array.from(map.values()).sort((a, b) => {
+      if (a.nome === 'Sem responsável') return 1
+      if (b.nome === 'Sem responsável') return -1
+      return a.nome.localeCompare(b.nome)
+    })
+  }, [metrics.proximasAcoes])
+
   return (
     <div>
       <div className="page-header">
@@ -267,12 +283,55 @@ export default function Dashboard({ onNavigate }) {
             />
           </div>
 
-          <div className="dashboard-section-title">Próximas ações — clientes que precisam de contato hoje</div>
-          <div className="equipe-list">
-            {metrics.proximasAcoes.length === 0 ? (
-              <div className="table-empty">Nenhuma ação pendente para hoje.</div>
-            ) : (
-              metrics.proximasAcoes.map((t) => (
+          <div className="chart-card-title-row">
+            <div className="dashboard-section-title" style={{ marginBottom: 0 }}>Próximas ações — clientes que precisam de contato hoje</div>
+            <div className="chart-toggle">
+              <button
+                type="button"
+                className={`chart-toggle-btn${visualizacaoAcoes === 'kanban' ? ' active' : ''}`}
+                onClick={() => setVisualizacaoAcoes('kanban')}
+              >
+                Kanban
+              </button>
+              <button
+                type="button"
+                className={`chart-toggle-btn${visualizacaoAcoes === 'lista' ? ' active' : ''}`}
+                onClick={() => setVisualizacaoAcoes('lista')}
+              >
+                Lista
+              </button>
+            </div>
+          </div>
+
+          {metrics.proximasAcoes.length === 0 ? (
+            <div className="table-empty">Nenhuma ação pendente para hoje.</div>
+          ) : visualizacaoAcoes === 'kanban' ? (
+            <div className="acoes-kanban">
+              {acoesPorResponsavel.map((coluna) => (
+                <div className="acoes-coluna" key={coluna.nome}>
+                  <div className="acoes-coluna-header">
+                    <div className="equipe-avatar" style={{ overflow: 'hidden', width: 26, height: 26 }}>
+                      {coluna.pessoa?.foto_url ? (
+                        <img src={coluna.pessoa.foto_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <UserRound size={13} />
+                      )}
+                    </div>
+                    <span>{coluna.nome}</span>
+                    <span className="tarefas-grupo-count">{coluna.tarefas.length}</span>
+                  </div>
+                  {coluna.tarefas.map((t) => (
+                    <div className="kanban-card" key={t.id} style={{ borderLeftColor: PRIORIDADE_COLOR[t.prioridade] }} onClick={() => setEditingTarefa(t)}>
+                      <div className="kanban-card-titulo">{t.cliente?.nome || 'Sem cliente'} — {t.titulo}</div>
+                      <div className="kanban-card-meta">prazo {formatarData(t.data)}</div>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="equipe-list">
+              {metrics.proximasAcoes.map((t) => (
                 <div className="equipe-card" key={t.id} style={{ cursor: 'pointer' }} onClick={() => setEditingTarefa(t)}>
                   <span className="tarefa-prioridade" style={{ background: PRIORIDADE_COLOR[t.prioridade], flexShrink: 0 }} />
                   <div className="equipe-avatar" style={{ overflow: 'hidden' }}>
@@ -291,9 +350,9 @@ export default function Dashboard({ onNavigate }) {
                   </div>
                   <span className="badge badge-neutral">ABRIR</span>
                 </div>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )}
 
           <div className="dashboard-section-title">Gráficos</div>
           <div className="charts-grid">
