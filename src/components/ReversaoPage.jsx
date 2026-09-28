@@ -14,6 +14,7 @@ export default function ReversaoPage({ filtroStatus: filtroInicial }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [filtroStatus, setFiltroStatus] = useState(filtroInicial || 'todos')
+  const [filtroResponsavel, setFiltroResponsavel] = useState('todos')
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
 
@@ -42,11 +43,12 @@ export default function ReversaoPage({ filtroStatus: filtroInicial }) {
 
   const filtradas = useMemo(
     () => reversoes.filter((r) => {
+      if (filtroResponsavel !== 'todos' && String(r.responsavel_id) !== filtroResponsavel) return false
       if (filtroStatus === 'todos') return true
       if (filtroStatus === 'em_processo') return EM_PROCESSO.includes(r.status)
       return r.status === filtroStatus
     }),
-    [reversoes, filtroStatus]
+    [reversoes, filtroStatus, filtroResponsavel]
   )
 
   const confirmadas = useMemo(() => reversoes.filter((r) => r.status === 'revertido'), [reversoes])
@@ -86,6 +88,12 @@ export default function ReversaoPage({ filtroStatus: filtroInicial }) {
           <option value="em_processo">Em processo (contato/negociação)</option>
           {Object.entries(REVERSAO_STATUS_LABELS).map(([k, label]) => (
             <option key={k} value={k}>{label}</option>
+          ))}
+        </select>
+        <select className="filter-select" value={filtroResponsavel} onChange={(e) => setFiltroResponsavel(e.target.value)}>
+          <option value="todos">Responsável: Todos</option>
+          {responsaveis.map((r) => (
+            <option key={r.id} value={String(r.id)}>{r.nome}</option>
           ))}
         </select>
       </div>

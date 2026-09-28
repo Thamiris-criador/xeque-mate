@@ -12,10 +12,15 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  PieChart,
+  Pie,
+  Cell,
 } from 'recharts'
 import { supabase } from '../lib/supabase.js'
 import { getPeriodoRange, dentroDoPeriodo, PERIODO_LABELS, formatarData, PRIORIDADE_COLOR } from '../lib/negocio.js'
+import { UserRound } from 'lucide-react'
 import './Dashboard.css'
+import './EquipePage.css'
 
 const STATUS_ORDER = ['em_dia', 'inadimplente', 'cancelado']
 
@@ -24,6 +29,8 @@ const STATUS_META = {
   inadimplente: { label: 'Inadimplente', color: 'var(--red)' },
   cancelado: { label: 'Cancelado', color: 'var(--gray-chart)' },
 }
+
+const PALETA_RESPONSAVEL = ['var(--green)', 'var(--blue)', 'var(--orange)', 'var(--purple)', 'var(--red)', 'var(--gray-chart)']
 
 function StatTile({ icon: Icon, label, value, color, hint, onClick }) {
   const Tag = onClick ? 'button' : 'div'
@@ -81,11 +88,12 @@ export default function Dashboard({ onNavigate }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [periodo, setPeriodo] = useState('semana')
+  const [graficoResponsavel, setGraficoResponsavel] = useState('barra')
 
   useEffect(() => {
     Promise.all([
       supabase.from('clientes').select('*, responsavel:equipe!responsavel_id(id, nome)'),
-      supabase.from('tarefas').select('*, cliente:clientes(id, nome, proxima_acao), responsavel:equipe(id, nome)'),
+      supabase.from('tarefas').select('*, cliente:clientes(id, nome, proxima_acao), responsavel:equipe(id, nome, foto_url)'),
       supabase.from('reversoes').select('status, data_pedido, data_reversao'),
       supabase.from('indicacoes').select('status, data_pedido'),
     ]).then(([c, t, r, i]) => {
@@ -171,6 +179,11 @@ export default function Dashboard({ onNavigate }) {
     return Array.from(map.values()).sort((a, b) => b.em_dia + b.inadimplente + b.cancelado - (a.em_dia + a.inadimplente + a.cancelado))
   }, [clientes])
 
+  const totalPorResponsavel = useMemo(
+    () => porResponsavel.map((r) => ({ nome: r.nome, total: r.em_dia + r.inadimplente + r.cancelado })),
+    [porResponsavel]
+  )
+
   return (
     <div>
       <div className="page-header">
@@ -241,11 +254,18 @@ export default function Dashboard({ onNavigate }) {
               <div className="table-empty">Nenhuma ação pendente para hoje.</div>
             ) : (
               metrics.proximasAcoes.map((t) => (
-                <div className="tarefa-row" key={t.id} style={{ cursor: 'default' }}>
-                  <span className="tarefa-prioridade" style={{ background: PRIORIDADE_COLOR[t.prioridade] }} />
-                  <div className="tarefa-info">
-                    <div className="tarefa-titulo">{t.cliente?.nome || 'Sem cliente'} — {t.titulo}</div>
-                    <div className="tarefa-meta">
+                <div className="equipe-card" key={t.id}>
+                  <span className="tarefa-prioridade" style={{ background: PRIORIDADE_COLOR[t.prioridade], flexShrink: 0 }} />
+                  <div className="equipe-avatar" style={{ overflow: 'hidden' }}>
+                    {t.responsavel?.foto_url ? (
+                      <img src={t.responsavel.foto_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <UserRound size={16} />
+                    )}
+                  </div>
+                  <div className="equipe-info">
+                    <div className="equipe-nome">{t.cliente?.nome || 'Sem cliente'} — {t.titulo}</div>
+                    <div className="equipe-email">
                       {t.responsavel?.nome || 'Sem responsável'} · prazo {formatarData(t.data)}
                       {t.cliente?.proxima_acao && ` · ${t.cliente.proxima_acao}`}
                     </div>
@@ -273,26 +293,90 @@ export default function Dashboard({ onNavigate }) {
             </div>
 
             <div className="chart-card">
-              <div className="chart-card-title">Clientes por responsável</div>
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={porResponsavel} margin={{ top: 8, right: 12, left: -12, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                  <XAxis dataKey="nome" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={{ stroke: 'var(--border)' }} />
-                  <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
-                  <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--bg-hover)' }} />
-                  {STATUS_ORDER.map((key, i) => (
-                    <Bar
-                      key={key}
-                      dataKey={key}
-                      stackId="status"
-                      fill={STATUS_META[key].color}
-                      radius={i === STATUS_ORDER.length - 1 ? [4, 4, 0, 0] : 0}
-                      barSize={48}
-                    />
-                  ))}
-                </BarChart>
-              </ResponsiveContainer>
-              <StatusLegend />
+              <div className="chart-card-title-row">
+                <div className="chart-card-title">Clientes por responsável</div>
+                <div className="chart-toggle">
+                  <button
+                    type="button"
+                    className={`chart-toggle-btn${graficoResponsavel === 'barra' ? ' active' : ''}`}
+                    onClick={() => setGraficoResponsavel('barra')}
+                  >
+                    Barra
+                  </button>
+                  <button
+                    type="button"
+                    className={`chart-toggle-btn${graficoResponsavel === 'pizza' ? ' active' : ''}`}
+                    onClick={() => setGraficoResponsavel('pizza')}
+                  >
+                    Pizza
+                  </button>
+                </div>
+              </div>
+              {graficoResponsavel === 'barra' ? (
+                <>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <BarChart data={porResponsavel} margin={{ top: 8, right: 12, left: -12, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                      <XAxis dataKey="nome" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={{ stroke: 'var(--border)' }} />
+                      <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
+                      <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--bg-hover)' }} />
+                      {STATUS_ORDER.map((key, i) => (
+                        <Bar
+                          key={key}
+                          dataKey={key}
+                          stackId="status"
+                          fill={STATUS_META[key].color}
+                          radius={i === STATUS_ORDER.length - 1 ? [4, 4, 0, 0] : 0}
+                          barSize={48}
+                        />
+                      ))}
+                    </BarChart>
+                  </ResponsiveContainer>
+                  <StatusLegend />
+                </>
+              ) : (
+                <>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <PieChart>
+                      <Tooltip
+                        content={({ active, payload }) => {
+                          if (!active || !payload?.length) return null
+                          const p = payload[0]
+                          return (
+                            <div className="chart-tooltip">
+                              <div className="chart-tooltip-row">
+                                <span className="chart-tooltip-dot" style={{ background: p.payload.fill }} />
+                                {p.name}: <strong>{p.value}</strong>
+                              </div>
+                            </div>
+                          )
+                        }}
+                      />
+                      <Pie
+                        data={totalPorResponsavel}
+                        dataKey="total"
+                        nameKey="nome"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={80}
+                        paddingAngle={2}
+                      >
+                        {totalPorResponsavel.map((r, i) => (
+                          <Cell key={r.nome} fill={PALETA_RESPONSAVEL[i % PALETA_RESPONSAVEL.length]} stroke="var(--bg-card)" strokeWidth={2} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="chart-legend">
+                    {totalPorResponsavel.map((r, i) => (
+                      <div className="chart-legend-item" key={r.nome}>
+                        <span className="chart-legend-dot" style={{ background: PALETA_RESPONSAVEL[i % PALETA_RESPONSAVEL.length] }} />
+                        {r.nome} ({r.total})
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </>

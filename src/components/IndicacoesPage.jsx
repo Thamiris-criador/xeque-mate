@@ -12,6 +12,7 @@ export default function IndicacoesPage({ filtroStatus: filtroInicial }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [filtroStatus, setFiltroStatus] = useState(filtroInicial || 'todos')
+  const [filtroResponsavel, setFiltroResponsavel] = useState('todos')
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
 
@@ -40,11 +41,12 @@ export default function IndicacoesPage({ filtroStatus: filtroInicial }) {
 
   const filtradas = useMemo(
     () => indicacoes.filter((i) => {
+      if (filtroResponsavel !== 'todos' && String(i.responsavel_id) !== filtroResponsavel) return false
       if (filtroStatus === 'todos') return true
       if (filtroStatus === 'recebidas') return i.status !== 'solicitada'
       return i.status === filtroStatus
     }),
-    [indicacoes, filtroStatus]
+    [indicacoes, filtroStatus, filtroResponsavel]
   )
 
   function handleEdit(i) {
@@ -72,6 +74,12 @@ export default function IndicacoesPage({ filtroStatus: filtroInicial }) {
             <option key={k} value={k}>{label}</option>
           ))}
         </select>
+        <select className="filter-select" value={filtroResponsavel} onChange={(e) => setFiltroResponsavel(e.target.value)}>
+          <option value="todos">Responsável: Todos</option>
+          {responsaveis.map((r) => (
+            <option key={r.id} value={String(r.id)}>{r.nome}</option>
+          ))}
+        </select>
       </div>
 
       <div className="results-count">{filtradas.length} INDICAÇÃO(ÕES)</div>
@@ -89,7 +97,7 @@ export default function IndicacoesPage({ filtroStatus: filtroInicial }) {
               <div className="equipe-info">
                 <div className="equipe-nome">{i.pessoa_indicada}</div>
                 <div className="equipe-email">
-                  Indicado por {i.cliente?.nome || 'cliente removido'} · {formatarData(i.data_pedido)}
+                  Indicado por {i.cliente?.nome || 'cliente removido'} · {i.responsavel?.nome || 'Sem responsável'} · {formatarData(i.data_pedido)}
                   {i.telefone_indicacao && ` · ${i.telefone_indicacao}`}
                 </div>
               </div>

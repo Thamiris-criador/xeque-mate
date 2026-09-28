@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase.js'
 import PlaybookItemModal from './PlaybookItemModal.jsx'
 import { formatarData } from '../lib/negocio.js'
 import './EquipePage.css'
+import './PlaybookPage.css'
 
 export default function PlaybookPage({ area }) {
   const [itens, setItens] = useState([])
@@ -65,22 +66,15 @@ export default function PlaybookPage({ area }) {
       ) : itens.length === 0 ? (
         <div className="table-empty">Nada cadastrado ainda. Clique em "Adicionar item" pra começar.</div>
       ) : (
-        <div className="equipe-list">
+        <div className="playbook-grid">
           {itens.map((item) => (
-            <div
-              className="equipe-card"
-              key={item.id}
-              style={{ cursor: 'pointer', flexDirection: 'column', alignItems: 'stretch', gap: 8 }}
-              onClick={() => handleEdit(item)}
-            >
-              <div className="equipe-info">
-                <div className="equipe-nome">
-                  <FileText size={15} style={{ verticalAlign: 'middle', marginRight: 6 }} />
-                  {item.titulo}
-                </div>
-                {item.descricao && <div className="equipe-email">{item.descricao}</div>}
+            <div className="playbook-card" key={item.id} onClick={() => handleEdit(item)}>
+              <div className="playbook-card-icon">
+                <FileText size={18} />
               </div>
-              <div className="equipe-email" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div className="playbook-card-titulo">{item.titulo}</div>
+              {item.descricao && <div className="playbook-card-descricao">{item.descricao}</div>}
+              <div className="playbook-card-footer">
                 <span>{formatarData(item.created_at?.slice(0, 10))}</span>
                 {item.arquivo_url && (
                   <a
@@ -88,7 +82,7 @@ export default function PlaybookPage({ area }) {
                     target="_blank"
                     rel="noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--green)' }}
+                    className="playbook-card-anexo"
                   >
                     <Paperclip size={13} /> {item.arquivo_nome || 'Anexo'}
                   </a>
