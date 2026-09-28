@@ -12,15 +12,20 @@ const ETAPAS_CONTEMPLACAO = [
   { key: 'concluido', label: 'Processo concluído', icon: CheckCircle2, color: 'var(--green)' },
 ]
 
-function StatTile({ icon: Icon, label, value, color }) {
+function StatTile({ icon: Icon, label, value, color, onClick, active }) {
+  const Tag = onClick ? 'button' : 'div'
   return (
-    <div className="stat-tile">
+    <Tag
+      className={`stat-tile${onClick ? ' clickable' : ''}${active ? ' stat-tile-active' : ''}`}
+      type={onClick ? 'button' : undefined}
+      onClick={onClick}
+    >
       <div className="stat-tile-icon" style={{ color }}>
         <Icon size={18} />
       </div>
       <div className="stat-tile-value">{value}</div>
       <div className="stat-tile-label">{label}</div>
-    </div>
+    </Tag>
   )
 }
 
@@ -80,6 +85,7 @@ export default function ClientesPage({ isAdmin, tabInicial }) {
   const [tab, setTab] = useState(tabInicial || 'todos')
   const [search, setSearch] = useState('')
   const [responsavelFiltro, setResponsavelFiltro] = useState('todos')
+  const [etapaFiltro, setEtapaFiltro] = useState('todas')
   const [clientes, setClientes] = useState([])
   const [responsaveis, setResponsaveis] = useState([])
   const [loading, setLoading] = useState(true)
@@ -142,6 +148,8 @@ export default function ClientesPage({ isAdmin, tabInicial }) {
       if (tab === 'inadimplentes' && c.financeiro_status !== 'inadimplente') return false
       if (tab === 'cancelados' && c.financeiro_status !== 'cancelado') return false
 
+      if (tab === 'contemplados' && etapaFiltro !== 'todas' && (c.status_documentacao || 'documentacao') !== etapaFiltro) return false
+
       if (responsavelFiltro !== 'todos' && String(c.responsavel_id) !== responsavelFiltro) return false
 
       if (search.trim()) {
@@ -155,7 +163,7 @@ export default function ClientesPage({ isAdmin, tabInicial }) {
 
       return true
     })
-  }, [clientes, tab, responsavelFiltro, search])
+  }, [clientes, tab, etapaFiltro, responsavelFiltro, search])
 
   async function handleAtualizarEtapa(clienteId, novaEtapa) {
     const anterior = clientes
@@ -204,7 +212,7 @@ export default function ClientesPage({ isAdmin, tabInicial }) {
             key={t.key}
             className={`status-chip${tab === t.key ? ' active' : ''}`}
             style={{ '--chip-color': t.color }}
-            onClick={() => setTab(t.key)}
+            onClick={() => { setTab(t.key); setEtapaFiltro('todas') }}
           >
             <span className="status-chip-dot" />
             {t.label}
@@ -221,9 +229,25 @@ export default function ClientesPage({ isAdmin, tabInicial }) {
           </p>
           <div className="stat-tiles-row" style={{ marginBottom: 16 }}>
             {ETAPAS_CONTEMPLACAO.map((e) => (
-              <StatTile key={e.key} icon={e.icon} label={e.label} value={contagemEtapaContemplacao[e.key]} color={e.color} />
+              <StatTile
+                key={e.key}
+                icon={e.icon}
+                label={e.label}
+                value={contagemEtapaContemplacao[e.key]}
+                color={e.color}
+                active={etapaFiltro === e.key}
+                onClick={() => setEtapaFiltro((f) => (f === e.key ? 'todas' : e.key))}
+              />
             ))}
           </div>
+          {etapaFiltro !== 'todas' && (
+            <div className="modal-hint" style={{ marginBottom: 12 }}>
+              Mostrando só quem está em "{ETAPAS_CONTEMPLACAO.find((e) => e.key === etapaFiltro)?.label}".
+              <button type="button" className="btn-secondary" style={{ marginLeft: 10 }} onClick={() => setEtapaFiltro('todas')}>
+                Limpar
+              </button>
+            </div>
+          )}
         </>
       )}
 

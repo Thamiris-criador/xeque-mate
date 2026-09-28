@@ -28,6 +28,10 @@ function Avatar({ pessoa }) {
   )
 }
 
+function estaAtrasada(t) {
+  return classificarDataTarefa(t.data) === 'atrasada' && !['concluida', 'cancelada'].includes(t.status)
+}
+
 export default function TarefasPage({ data: dataInicial, status: statusInicial }) {
   const [tarefas, setTarefas] = useState([])
   const [clientes, setClientes] = useState([])
@@ -69,7 +73,8 @@ export default function TarefasPage({ data: dataInicial, status: statusInicial }
 
   const filtradas = useMemo(() => {
     return tarefas.filter((t) => {
-      if (filtroData !== 'todas' && classificarDataTarefa(t.data) !== filtroData) return false
+      if (filtroData === 'atrasada' && (classificarDataTarefa(t.data) !== 'atrasada' || ['concluida', 'cancelada'].includes(t.status))) return false
+      else if (filtroData !== 'todas' && filtroData !== 'atrasada' && classificarDataTarefa(t.data) !== filtroData) return false
       if (filtroResponsavel !== 'todos' && String(t.responsavel_id) !== filtroResponsavel) return false
       if (filtroPrioridade !== 'todas' && t.prioridade !== filtroPrioridade) return false
       if (filtroStatus === 'abertas' && ['concluida', 'cancelada'].includes(t.status)) return false
@@ -187,15 +192,18 @@ export default function TarefasPage({ data: dataInicial, status: statusInicial }
                 </div>
                 {tarefasColuna.map((t) => (
                   <div
-                    className="kanban-card"
+                    className={`kanban-card${estaAtrasada(t) ? ' kanban-card-atrasada' : ''}`}
                     key={t.id}
-                    style={{ borderLeftColor: PRIORIDADE_COLOR[t.prioridade] }}
+                    style={{ borderLeftColor: estaAtrasada(t) ? 'var(--red)' : PRIORIDADE_COLOR[t.prioridade] }}
                     onClick={() => handleEdit(t)}
                   >
-                    <div className="kanban-card-titulo">{t.titulo}</div>
+                    <div className="kanban-card-titulo">
+                      {estaAtrasada(t) && <span className="badge badge-red" style={{ marginRight: 6 }}>ATRASADA</span>}
+                      {t.titulo}
+                    </div>
                     <div className="kanban-card-meta">
                       <Avatar pessoa={t.responsavel} />
-                      {t.responsavel?.nome || 'Sem responsável'} · {formatarData(t.data)}
+                      {t.lead ? `Lead: ${t.lead.nome}` : t.cliente?.nome || 'Sem cliente'} · {t.responsavel?.nome || 'Sem responsável'} · {formatarData(t.data)}
                     </div>
                   </div>
                 ))}
@@ -214,9 +222,12 @@ export default function TarefasPage({ data: dataInicial, status: statusInicial }
             <div className="tarefas-list">
               {grupo.tarefas.map((t) => (
                 <div className="tarefa-row" key={t.id} onClick={() => handleEdit(t)}>
-                  <span className="tarefa-prioridade" style={{ background: PRIORIDADE_COLOR[t.prioridade] }} title={PRIORIDADE_LABELS[t.prioridade]} />
+                  <span className="tarefa-prioridade" style={{ background: estaAtrasada(t) ? 'var(--red)' : PRIORIDADE_COLOR[t.prioridade] }} title={PRIORIDADE_LABELS[t.prioridade]} />
                   <div className="tarefa-info">
-                    <div className="tarefa-titulo">{t.titulo}</div>
+                    <div className="tarefa-titulo">
+                      {estaAtrasada(t) && <span className="badge badge-red" style={{ marginRight: 6 }}>ATRASADA</span>}
+                      {t.titulo}
+                    </div>
                     <div className="tarefa-meta">
                       {t.lead ? `Lead: ${t.lead.nome}` : t.cliente?.nome || 'Sem cliente'} · {formatarData(t.data)}
                       {t.horario && ` às ${t.horario.slice(0, 5)}`}
