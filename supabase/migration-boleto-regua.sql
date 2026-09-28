@@ -34,9 +34,9 @@ alter table boleto_ciclos
   add column if not exists data_envio date,
   add column if not exists data_pagamento date,
   add column if not exists promessa_data date,
-  add column if not exists tarefa_envio_id bigint,
-  add column if not exists tarefa_lance_id bigint,
-  add column if not exists tarefa_atraso_id bigint,
+  add column if not exists tarefa_envio_id uuid,
+  add column if not exists tarefa_lance_id uuid,
+  add column if not exists tarefa_atraso_id uuid,
   add column if not exists created_at timestamptz not null default now();
 
 alter table boleto_ciclos drop constraint if exists boleto_ciclos_cliente_id_fkey;
@@ -87,7 +87,7 @@ declare
   gabriel_id bigint;
   c record;
   ciclo record;
-  nova_tarefa_id bigint;
+  nova_tarefa_id uuid;
   dias int;
 begin
   select id into gabriel_id from equipe where nome = 'Gabriel' limit 1;
@@ -194,7 +194,7 @@ security definer
 set search_path = public
 as $$
 declare
-  v_tarefa_id bigint;
+  v_tarefa_id uuid;
 begin
   update boleto_ciclos set status = 'enviado', data_envio = p_data
   where id = p_ciclo_id and status = 'a_enviar'
@@ -215,7 +215,7 @@ as $$
 declare
   v_cliente_id bigint;
   v_cliente_nome text;
-  v_tarefa_lance_id bigint;
+  v_tarefa_lance_id uuid;
   gabriel_id bigint;
 begin
   select cliente_id, tarefa_lance_id into v_cliente_id, v_tarefa_lance_id
