@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState, useCallback } from 'react'
-import { CircleDot, Send, Clock, CheckCircle2, AlertTriangle, CalendarClock } from 'lucide-react'
+import { CircleDot, Send, Clock, CheckCircle2, AlertTriangle, CalendarClock, Receipt } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import {
   BOLETO_STATUS_LABELS, BOLETO_STATUS_BADGE_CLASS, statusVisualBoleto, diasAtrasoBoleto, formatarData,
 } from '../lib/negocio.js'
+import DicaBanner from './DicaBanner.jsx'
 import './ClientesPage.css'
 import './ComercialPage.css'
 import './EquipePage.css'
@@ -121,6 +122,11 @@ export default function BoletosPage() {
           <p className="page-subtitle">Régua de envio e pagamento, um ciclo por vencimento de cada cliente.</p>
         </div>
       </div>
+
+      <DicaBanner
+        icon={Receipt}
+        texto="Assim que você marcar um boleto como pago, o sistema já cria sozinho a tarefa de enviar a oferta de lance — não precisa lembrar disso na mão. E se o vencimento passar sem confirmação, o cliente já vira 'Em atraso' automaticamente com uma tarefa de contato pronta pro Gabriel."
+      />
 
       <div className="kpi-grid">
         <KpiCard tom="gray" icon={Send} value={contagem.a_enviar} label="Boletos a enviar" />

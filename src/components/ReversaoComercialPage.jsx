@@ -13,6 +13,7 @@ export default function ReversaoComercialPage({ isAdmin }) {
   const [comercialTarefas, setComercialTarefas] = useState([])
   const [clientes, setClientes] = useState([])
   const [responsaveis, setResponsaveis] = useState([])
+  const [responsaveisPosVendas, setResponsaveisPosVendas] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -55,6 +56,7 @@ export default function ReversaoComercialPage({ isAdmin }) {
   useEffect(() => {
     loadData()
     supabase.from('equipe').select('id, nome').order('nome').then(({ data }) => setResponsaveis(data || []))
+    supabase.from('equipe').select('id, nome').eq('area', 'Pós-Vendas').order('nome').then(({ data }) => setResponsaveisPosVendas(data || []))
   }, [loadData])
 
   const linhas = useMemo(() => {
@@ -201,7 +203,7 @@ export default function ReversaoComercialPage({ isAdmin }) {
         <ReversaoModal
           reversao={editingReversao}
           clientes={clientes}
-          responsaveis={responsaveis}
+          responsaveis={responsaveisPosVendas}
           presetClienteId={presetClienteReversao}
           onClose={() => setReversaoModalOpen(false)}
           onSaved={() => { setReversaoModalOpen(false); loadData() }}

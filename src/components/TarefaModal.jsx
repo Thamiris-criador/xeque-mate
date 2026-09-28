@@ -137,7 +137,7 @@ export default function TarefaModal({
             <input value={form.descricao} onChange={(e) => update('descricao', e.target.value)} />
           </label>
 
-          {!presetClienteId && (
+          {!presetClienteId && form.categoria !== 'Pós-Vendas' && (
             <label>
               Cliente
               <select value={form.cliente_id} onChange={(e) => update('cliente_id', e.target.value)}>

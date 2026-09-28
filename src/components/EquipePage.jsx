@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Plus, UserRound, Crown } from 'lucide-react'
+import { Plus, UserRound, Crown, Briefcase, HeartHandshake, Wallet } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import UserModal from './UserModal.jsx'
 import './EquipePage.css'
@@ -11,6 +11,8 @@ const AREAS = [
     subtitulo: 'Relacionamento, oportunidades e novos negócios.',
     descricao:
       'O time Comercial é responsável pelos primeiros passos da jornada do cliente. É aqui que entendemos seus objetivos, apresentamos as melhores soluções e conduzimos cada negociação com clareza, estratégia e transparência.',
+    icon: Briefcase,
+    cor: 'var(--blue)',
   },
   {
     key: 'Pós-Vendas',
@@ -18,30 +20,34 @@ const AREAS = [
     subtitulo: 'Onboarding, relacionamento e acompanhamento da jornada.',
     descricao:
       'Onboarding, boas-vindas, relacionamento, acompanhamento da jornada, orientações, atendimento, suporte, acompanhamento financeiro, acompanhamento de assembleias, orientações sobre lance, recuperação/reversão, pedido de indicação e fidelização.',
+    icon: HeartHandshake,
+    cor: 'var(--green)',
   },
   {
     key: 'Financeiro',
     titulo: 'FINANCEIRO',
     subtitulo: null,
     descricao: null,
+    icon: Wallet,
+    cor: 'var(--orange)',
   },
 ]
 
 function MemberCard({ m, onClick }) {
   return (
-    <div className="equipe-card" key={m.id} style={{ cursor: 'pointer' }} onClick={() => onClick(m)}>
-      <div className="equipe-avatar" style={{ overflow: 'hidden' }}>
+    <div className="equipe-member-card" key={m.id} onClick={() => onClick(m)}>
+      <div className="equipe-avatar" style={{ overflow: 'hidden', width: 44, height: 44 }}>
         {m.foto_url ? (
           <img src={m.foto_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
-          <UserRound size={18} />
+          <UserRound size={20} />
         )}
       </div>
       <div className="equipe-info">
         <div className="equipe-nome">{m.nome}</div>
         <div className="equipe-email">{m.email || 'sem login cadastrado'}</div>
+        {m.cargo && <span className="badge badge-neutral" style={{ marginTop: 6, display: 'inline-block' }}>{m.cargo.toUpperCase()}</span>}
       </div>
-      {m.cargo && <span className="badge badge-neutral">{m.cargo.toUpperCase()}</span>}
     </div>
   )
 }
@@ -114,10 +120,12 @@ export default function EquipePage() {
           {lideranca.length > 0 && (
             <div className="equipe-area">
               <div className="equipe-area-header">
-                <Crown size={16} className="equipe-area-icon" />
+                <div className="equipe-area-icon-badge" style={{ color: 'var(--green)', background: 'rgba(163, 230, 53, 0.15)' }}>
+                  <Crown size={16} />
+                </div>
                 <div className="equipe-area-titulo">LIDERANÇA</div>
               </div>
-              <div className="equipe-list equipe-list-lideranca">
+              <div className="equipe-member-grid equipe-member-grid-lideranca">
                 {lideranca.map((m) => (
                   <MemberCard m={m} key={m.id} onClick={handleEdit} />
                 ))}
@@ -127,15 +135,21 @@ export default function EquipePage() {
 
           {AREAS.map((area) => {
             const membros = equipe.filter((m) => m.area === area.key)
+            const Icon = area.icon
             return (
               <div className="equipe-area" key={area.key}>
                 <div className="equipe-area-header">
-                  <div className="equipe-area-titulo">{area.titulo}</div>
-                  {area.subtitulo && <div className="equipe-area-subtitulo">{area.subtitulo}</div>}
+                  <div className="equipe-area-icon-badge" style={{ color: area.cor, background: `color-mix(in srgb, ${area.cor} 18%, transparent)` }}>
+                    <Icon size={16} />
+                  </div>
+                  <div>
+                    <div className="equipe-area-titulo">{area.titulo}</div>
+                    {area.subtitulo && <div className="equipe-area-subtitulo">{area.subtitulo}</div>}
+                  </div>
                 </div>
                 {area.descricao && <p className="equipe-area-descricao">{area.descricao}</p>}
                 {membros.length > 0 ? (
-                  <div className="equipe-list">
+                  <div className="equipe-member-grid">
                     {membros.map((m) => (
                       <MemberCard m={m} key={m.id} onClick={handleEdit} />
                     ))}
@@ -152,7 +166,7 @@ export default function EquipePage() {
               <div className="equipe-area-header">
                 <div className="equipe-area-titulo">SEM ÁREA DEFINIDA</div>
               </div>
-              <div className="equipe-list">
+              <div className="equipe-member-grid">
                 {semArea.map((m) => (
                   <MemberCard m={m} key={m.id} onClick={handleEdit} />
                 ))}

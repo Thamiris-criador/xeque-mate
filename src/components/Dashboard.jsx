@@ -19,6 +19,7 @@ import {
 import { supabase } from '../lib/supabase.js'
 import { getPeriodoRange, dentroDoPeriodo, PERIODO_LABELS, formatarData, PRIORIDADE_COLOR } from '../lib/negocio.js'
 import { UserRound } from 'lucide-react'
+import TarefaModal from './TarefaModal.jsx'
 import './Dashboard.css'
 import './EquipePage.css'
 
@@ -89,15 +90,19 @@ export default function Dashboard({ onNavigate }) {
   const [error, setError] = useState(null)
   const [periodo, setPeriodo] = useState('semana')
   const [graficoResponsavel, setGraficoResponsavel] = useState('barra')
+  const [graficoDistribuicao, setGraficoDistribuicao] = useState('barra')
+  const [equipe, setEquipe] = useState([])
+  const [editingTarefa, setEditingTarefa] = useState(null)
 
-  useEffect(() => {
+  const loadData = () => {
     Promise.all([
       supabase.from('clientes').select('*, responsavel:equipe!responsavel_id(id, nome)'),
       supabase.from('tarefas').select('*, cliente:clientes(id, nome, proxima_acao), responsavel:equipe(id, nome, foto_url)'),
       supabase.from('reversoes').select('status, data_pedido, data_reversao'),
       supabase.from('indicacoes').select('status, data_pedido'),
-    ]).then(([c, t, r, i]) => {
-      const fetchError = c.error || t.error || r.error || i.error
+      supabase.from('equipe').select('id, nome'),
+    ]).then(([c, t, r, i, e]) => {
+      const fetchError = c.error || t.error || r.error || i.error || e.error
       if (fetchError) {
         setError(fetchError.message)
       } else {
@@ -105,9 +110,15 @@ export default function Dashboard({ onNavigate }) {
         setTarefas(t.data || [])
         setReversoes(r.data || [])
         setIndicacoes(i.data || [])
+        setEquipe(e.data || [])
       }
       setLoading(false)
     })
+  }
+
+  useEffect(() => {
+    loadData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const totals = useMemo(() => {
@@ -254,7 +265,7 @@ export default function Dashboard({ onNavigate }) {
               <div className="table-empty">Nenhuma ação pendente para hoje.</div>
             ) : (
               metrics.proximasAcoes.map((t) => (
-                <div className="equipe-card" key={t.id}>
+                <div className="equipe-card" key={t.id} style={{ cursor: 'pointer' }} onClick={() => setEditingTarefa(t)}>
                   <span className="tarefa-prioridade" style={{ background: PRIORIDADE_COLOR[t.prioridade], flexShrink: 0 }} />
                   <div className="equipe-avatar" style={{ overflow: 'hidden' }}>
                     {t.responsavel?.foto_url ? (
@@ -270,6 +281,7 @@ export default function Dashboard({ onNavigate }) {
                       {t.cliente?.proxima_acao && ` · ${t.cliente.proxima_acao}`}
                     </div>
                   </div>
+                  <span className="badge badge-neutral">ABRIR</span>
                 </div>
               ))
             )}
@@ -278,17 +290,69 @@ export default function Dashboard({ onNavigate }) {
           <div className="dashboard-section-title">Gráficos</div>
           <div className="charts-grid">
             <div className="chart-card">
-              <div className="chart-card-title">Distribuição por status financeiro</div>
-              <ResponsiveContainer width="100%" height={110}>
-                <BarChart data={distribuicaoGeral} layout="vertical" margin={{ top: 0, right: 12, left: 0, bottom: 0 }}>
-                  <XAxis type="number" hide />
-                  <YAxis type="category" dataKey="nome" hide />
-                  <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--bg-hover)' }} />
-                  {STATUS_ORDER.map((key) => (
-                    <Bar key={key} dataKey={key} stackId="status" fill={STATUS_META[key].color} radius={[4, 4, 4, 4]} barSize={36} />
-                  ))}
-                </BarChart>
-              </ResponsiveContainer>
+              <div className="chart-card-title-row">
+                <div className="chart-card-title">Distribuição por status financeiro</div>
+                <div className="chart-toggle">
+                  <button
+                    type="button"
+                    className={`chart-toggle-btn${graficoDistribuicao === 'barra' ? ' active' : ''}`}
+                    onClick={() => setGraficoDistribuicao('barra')}
+                  >
+                    Barra
+                  </button>
+                  <button
+                    type="button"
+                    className={`chart-toggle-btn${graficoDistribuicao === 'pizza' ? ' active' : ''}`}
+                    onClick={() => setGraficoDistribuicao('pizza')}
+                  >
+                    Pizza
+                  </button>
+                </div>
+              </div>
+              {graficoDistribuicao === 'barra' ? (
+                <ResponsiveContainer width="100%" height={110}>
+                  <BarChart data={distribuicaoGeral} layout="vertical" margin={{ top: 0, right: 12, left: 0, bottom: 0 }}>
+                    <XAxis type="number" hide />
+                    <YAxis type="category" dataKey="nome" hide />
+                    <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--bg-hover)' }} />
+                    {STATUS_ORDER.map((key) => (
+                      <Bar key={key} dataKey={key} stackId="status" fill={STATUS_META[key].color} radius={[4, 4, 4, 4]} barSize={36} />
+                    ))}
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <ResponsiveContainer width="100%" height={180}>
+                  <PieChart>
+                    <Tooltip
+                      content={({ active, payload }) => {
+                        if (!active || !payload?.length) return null
+                        const p = payload[0]
+                        return (
+                          <div className="chart-tooltip">
+                            <div className="chart-tooltip-row">
+                              <span className="chart-tooltip-dot" style={{ background: p.payload.fill }} />
+                              {p.name}: <strong>{p.value}</strong>
+                            </div>
+                          </div>
+                        )
+                      }}
+                    />
+                    <Pie
+                      data={STATUS_ORDER.map((key) => ({ nome: STATUS_META[key].label, valor: totals.byStatus[key], fill: STATUS_META[key].color }))}
+                      dataKey="valor"
+                      nameKey="nome"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={70}
+                      paddingAngle={2}
+                    >
+                      {STATUS_ORDER.map((key) => (
+                        <Cell key={key} fill={STATUS_META[key].color} stroke="var(--bg-card)" strokeWidth={2} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
               <StatusLegend />
             </div>
 
@@ -380,6 +444,17 @@ export default function Dashboard({ onNavigate }) {
             </div>
           </div>
         </>
+      )}
+
+      {editingTarefa && (
+        <TarefaModal
+          tarefa={editingTarefa}
+          clientes={clientes}
+          responsaveis={equipe}
+          onClose={() => setEditingTarefa(null)}
+          onSaved={() => { setEditingTarefa(null); loadData() }}
+          onDeleted={() => { setEditingTarefa(null); loadData() }}
+        />
       )}
     </div>
   )

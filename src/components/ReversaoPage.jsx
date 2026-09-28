@@ -38,7 +38,7 @@ export default function ReversaoPage({ filtroStatus: filtroInicial }) {
   useEffect(() => {
     loadData()
     supabase.from('clientes').select('id, nome').order('nome').then(({ data }) => setClientes(data || []))
-    supabase.from('equipe').select('id, nome').order('nome').then(({ data }) => setResponsaveis(data || []))
+    supabase.from('equipe').select('id, nome').eq('area', 'Pós-Vendas').order('nome').then(({ data }) => setResponsaveis(data || []))
   }, [loadData])
 
   const filtradas = useMemo(

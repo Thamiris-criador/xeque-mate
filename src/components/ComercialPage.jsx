@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from 'react'
 import {
   Plus, Users2, FileText, Handshake, Clock, TrendingUp, Pause, XCircle,
-  Phone, MessageCircle, MoreVertical,
+  Phone, MessageCircle, MoreVertical, Target,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import LeadModal from './LeadModal.jsx'
@@ -9,6 +9,7 @@ import {
   LEAD_STATUS_LABELS, LEAD_STATUS_BADGE_CLASS, LEAD_TEMPERATURA_LABELS, LEAD_TEMPERATURA_COLOR,
   dentroDoPeriodo, formatarData,
 } from '../lib/negocio.js'
+import DicaBanner from './DicaBanner.jsx'
 import './ClientesPage.css'
 import './Dashboard.css'
 import './ComercialPage.css'
@@ -169,6 +170,12 @@ export default function ComercialPage() {
           <Plus size={16} /> Novo lead
         </button>
       </div>
+
+      <DicaBanner
+        icon={Target}
+        titulo="DICA COMERCIAL"
+        texto="Leads quentes esfriam rápido: quanto antes você entrar em contato depois do primeiro sinal de interesse, maior a chance de fechar. Use o filtro 'Próximo contato' pra nunca deixar ninguém esperando."
+      />
 
       <div className="kpi-grid">
         <KpiCard tom="green" icon={Users2} value={kpis.ativos} label="Leads ativos" hint="Oportunidades em andamento" />

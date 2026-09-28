@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase.js'
 import TarefaModal from './TarefaModal.jsx'
 import {
   PRIORIDADE_COLOR, TAREFA_STATUS_LABELS, formatarData, dentroDoPeriodo,
-  TIPOS_CONTEUDO_POS_VENDAS, TIPOS_CONTEUDO_LABELS, CANAIS_CONTEUDO, IDEIAS_CONTEUDO_POS_VENDAS,
+  TIPOS_CONTEUDO_POS_VENDAS, TIPOS_CONTEUDO_LABELS, CANAIS_CONTEUDO,
 } from '../lib/negocio.js'
 import './ClientesPage.css'
 import './ComercialPage.css'
@@ -19,6 +19,9 @@ export default function AcompanhamentoPosVendasPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [presetIdeia, setPresetIdeia] = useState(null)
+  const [ideias, setIdeias] = useState([])
+  const [novaIdeia, setNovaIdeia] = useState('')
+  const [salvandoIdeia, setSalvandoIdeia] = useState(false)
 
   const [filtroResponsavel, setFiltroResponsavel] = useState('todos')
   const [filtroTipo, setFiltroTipo] = useState('todos')
@@ -43,11 +46,30 @@ export default function AcompanhamentoPosVendasPage() {
     setLoading(false)
   }, [])
 
+  const loadIdeias = useCallback(async () => {
+    const { data } = await supabase.from('conteudo_ideias').select('*').order('created_at', { ascending: true })
+    setIdeias(data || [])
+  }, [])
+
   useEffect(() => {
     loadData()
+    loadIdeias()
     supabase.from('clientes').select('id, nome').order('nome').then(({ data }) => setClientes(data || []))
     supabase.from('equipe').select('id, nome').in('nome', ['Thami', 'Cley']).order('nome').then(({ data }) => setResponsaveis(data || []))
-  }, [loadData])
+  }, [loadData, loadIdeias])
+
+  async function handleAddIdeia() {
+    if (!novaIdeia.trim()) return
+    setSalvandoIdeia(true)
+    const { error: ideiaError } = await supabase.from('conteudo_ideias').insert({ texto: novaIdeia.trim() })
+    setSalvandoIdeia(false)
+    if (ideiaError) {
+      setError(ideiaError.message)
+    } else {
+      setNovaIdeia('')
+      loadIdeias()
+    }
+  }
 
   const filtradas = useMemo(() => {
     return tarefas.filter((t) => {
@@ -163,14 +185,31 @@ export default function AcompanhamentoPosVendasPage() {
 
         <aside className="proximas-acoes-panel">
           <div className="proximas-acoes-titulo">IDEIAS DE CONTEÚDO</div>
-          {IDEIAS_CONTEUDO_POS_VENDAS.map((ideia, i) => (
-            <div key={i} className="proxima-acao-item" onClick={() => handleNovo(ideia)}>
+          {ideias.map((ideia) => (
+            <div key={ideia.id} className="proxima-acao-item" onClick={() => handleNovo(ideia.texto)}>
               <Lightbulb size={14} style={{ marginTop: 3, flexShrink: 0, color: 'var(--orange)' }} />
               <div style={{ flex: 1 }}>
-                <div className="proxima-acao-desc">{ideia}</div>
+                <div className="proxima-acao-desc">{ideia.texto}</div>
               </div>
             </div>
           ))}
+          <div className="modal-form-row" style={{ marginTop: 12 }}>
+            <input
+              value={novaIdeia}
+              onChange={(e) => setNovaIdeia(e.target.value)}
+              placeholder="Nova ideia de conteúdo..."
+              style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 6, padding: '8px 10px', color: 'var(--text)', flex: 1 }}
+            />
+          </div>
+          <button
+            type="button"
+            className="btn-secondary"
+            style={{ width: '100%', marginTop: 8, justifyContent: 'center' }}
+            disabled={salvandoIdeia || !novaIdeia.trim()}
+            onClick={handleAddIdeia}
+          >
+            <Plus size={14} /> {salvandoIdeia ? 'Salvando...' : 'Adicionar ideia'}
+          </button>
         </aside>
       </div>
 

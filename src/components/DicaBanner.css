@@ -1,0 +1,37 @@
+.dica-banner {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  background: linear-gradient(135deg, rgba(163, 230, 53, 0.1), rgba(163, 230, 53, 0.02));
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--green);
+  border-radius: 10px;
+  padding: 18px 22px;
+  margin-bottom: 20px;
+}
+
+.dica-banner-icone {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(163, 230, 53, 0.15);
+  color: var(--green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dica-banner-titulo {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: var(--green);
+  margin-bottom: 4px;
+}
+
+.dica-banner-texto {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.5;
+}

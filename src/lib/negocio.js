@@ -322,12 +322,3 @@ export const TIPOS_CONTEUDO_POS_VENDAS = [
 export const TIPOS_CONTEUDO_LABELS = Object.fromEntries(TIPOS_CONTEUDO_POS_VENDAS.map((t) => [t.key, t.label]))
 
 export const CANAIS_CONTEUDO = ['Texto', 'Vídeo', 'Áudio', 'Imagem']
-
-export const IDEIAS_CONTEUDO_POS_VENDAS = [
-  '3 coisas que todo cliente deveria saber antes da assembleia.',
-  'Você sabe o que acontece depois que é contemplado?',
-  'Lance embutido: quando ele pode fazer sentido?',
-  'O que fazer quando a parcela apertou?',
-  'Por que seu Pós-Vendas é importante depois da contratação?',
-  'O que nossa equipe acompanha enquanto você espera sua contemplação?',
-]

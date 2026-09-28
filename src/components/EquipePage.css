@@ -47,13 +47,55 @@
 
 .equipe-area-header {
   display: flex;
-  align-items: baseline;
-  gap: 10px;
-  margin-bottom: 6px;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
 }
 
 .equipe-area-icon {
   color: var(--green);
+}
+
+.equipe-area-icon-badge {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.equipe-member-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.equipe-member-grid-lideranca {
+  grid-template-columns: repeat(auto-fill, minmax(260px, 320px));
+}
+
+.equipe-member-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.equipe-member-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--green);
+}
+
+.equipe-member-grid-lideranca .equipe-member-card {
+  border-color: var(--green);
 }
 
 .equipe-area-titulo {
@@ -79,11 +121,6 @@
   color: var(--text-muted);
   font-size: 12px;
   font-style: italic;
-}
-
-.equipe-list-lideranca .equipe-card {
-  border-color: var(--green);
-  max-width: 320px;
 }
 
 .etapa-stepper {
