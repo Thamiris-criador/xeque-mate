@@ -14,9 +14,14 @@ import './ClientesPage.css'
 import './Dashboard.css'
 import './ComercialPage.css'
 
-function KpiCard({ icon: Icon, value, label, hint, tom }) {
+function KpiCard({ icon: Icon, value, label, hint, tom, onClick, active }) {
+  const Tag = onClick ? 'button' : 'div'
   return (
-    <div className={`kpi-card tint-${tom}`}>
+    <Tag
+      type={onClick ? 'button' : undefined}
+      className={`kpi-card tint-${tom}${onClick ? ' clickable' : ''}${active ? ' active' : ''}`}
+      onClick={onClick}
+    >
       <div className={`kpi-card-icon tint-${tom}`}>
         <Icon size={19} />
       </div>
@@ -25,8 +30,18 @@ function KpiCard({ icon: Icon, value, label, hint, tom }) {
         <div className="kpi-card-label">{label}</div>
         {hint && <div className="kpi-card-hint">{hint}</div>}
       </div>
-    </div>
+    </Tag>
   )
+}
+
+const KPI_FILTRO_LABELS = {
+  ativos: 'Leads ativos',
+  propostas: 'Propostas enviadas',
+  negociacao: 'Em negociação',
+  followups: 'Follow-ups pendentes',
+  vendas: 'Vendas (convertidos)',
+  adiados: 'Adiados',
+  perdidos: 'Perdidos',
 }
 
 function formatarProximoContato(dataStr) {
@@ -58,6 +73,7 @@ export default function ComercialPage() {
   const [proximoContatoFiltro, setProximoContatoFiltro] = useState('todos')
   const [entradaFiltro, setEntradaFiltro] = useState('todos')
   const [vendedoraFiltro, setVendedoraFiltro] = useState('todas')
+  const [kpiFiltro, setKpiFiltro] = useState('todos')
 
   const mesesEntrada = useMemo(() => {
     const nomes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
@@ -99,17 +115,27 @@ export default function ComercialPage() {
     return !eu || eu.area === 'Liderança' || eu.acesso_total
   }, [equipe, userEmail])
 
+  const vendedoraSelecionada = useMemo(
+    () => (souGestao && vendedoraFiltro !== 'todas' ? vendedores.find((v) => String(v.id) === vendedoraFiltro) : null),
+    [souGestao, vendedoraFiltro, vendedores],
+  )
+
+  const leadsEscopoKpi = useMemo(
+    () => (vendedoraSelecionada ? leads.filter((l) => String(l.vendedor_id) === vendedoraFiltro) : leads),
+    [leads, vendedoraSelecionada, vendedoraFiltro],
+  )
+
   const kpis = useMemo(() => {
     const hoje = new Date().toISOString().slice(0, 10)
-    const ativos = leads.filter((l) => !l.convertido && !['perdido', 'sem_interesse', 'adiado'].includes(l.status))
-    const propostas = leads.filter((l) => l.status === 'proposta_enviada').length
-    const negociacao = leads.filter((l) => l.status === 'em_negociacao').length
-    const followUps = leads.filter((l) => !l.convertido && l.proximo_contato && l.proximo_contato <= hoje).length
-    const vendas = leads.filter((l) => l.convertido).length
-    const adiados = leads.filter((l) => l.status === 'adiado').length
-    const perdidos = leads.filter((l) => l.status === 'perdido').length
+    const ativos = leadsEscopoKpi.filter((l) => !l.convertido && !['perdido', 'sem_interesse', 'adiado'].includes(l.status))
+    const propostas = leadsEscopoKpi.filter((l) => l.status === 'proposta_enviada').length
+    const negociacao = leadsEscopoKpi.filter((l) => l.status === 'em_negociacao').length
+    const followUps = leadsEscopoKpi.filter((l) => !l.convertido && l.proximo_contato && l.proximo_contato <= hoje).length
+    const vendas = leadsEscopoKpi.filter((l) => l.convertido).length
+    const adiados = leadsEscopoKpi.filter((l) => l.status === 'adiado').length
+    const perdidos = leadsEscopoKpi.filter((l) => l.status === 'perdido').length
     return { ativos: ativos.length, propostas, negociacao, followUps, vendas, adiados, perdidos }
-  }, [leads])
+  }, [leadsEscopoKpi])
 
   const filtrados = useMemo(() => {
     const hoje = new Date().toISOString().slice(0, 10)
@@ -119,6 +145,14 @@ export default function ComercialPage() {
       if (souGestao && vendedoraFiltro !== 'todas' && String(l.vendedor_id) !== vendedoraFiltro) return false
       if (statusFiltro !== 'todos' && l.status !== statusFiltro) return false
       if (temperaturaFiltro !== 'todas' && l.temperatura !== temperaturaFiltro) return false
+
+      if (kpiFiltro === 'ativos' && (l.convertido || ['perdido', 'sem_interesse', 'adiado'].includes(l.status))) return false
+      if (kpiFiltro === 'propostas' && l.status !== 'proposta_enviada') return false
+      if (kpiFiltro === 'negociacao' && l.status !== 'em_negociacao') return false
+      if (kpiFiltro === 'followups' && (l.convertido || !l.proximo_contato || l.proximo_contato > hoje)) return false
+      if (kpiFiltro === 'vendas' && !l.convertido) return false
+      if (kpiFiltro === 'adiados' && l.status !== 'adiado') return false
+      if (kpiFiltro === 'perdidos' && l.status !== 'perdido') return false
       if ((entradaFiltro === 'hoje' || entradaFiltro === 'semana') && !dentroDoPeriodo(l.data_entrada, entradaFiltro)) return false
       if (/^\d{4}-\d{2}$/.test(entradaFiltro) && l.data_entrada?.slice(0, 7) !== entradaFiltro) return false
 
@@ -134,14 +168,14 @@ export default function ComercialPage() {
       }
       return true
     })
-  }, [leads, souGestao, vendedoraFiltro, statusFiltro, temperaturaFiltro, proximoContatoFiltro, entradaFiltro, search])
+  }, [leads, souGestao, vendedoraFiltro, statusFiltro, temperaturaFiltro, kpiFiltro, proximoContatoFiltro, entradaFiltro, search])
 
   const proximasAcoes = useMemo(() => {
-    return leads
+    return leadsEscopoKpi
       .filter((l) => !l.convertido && l.proximo_contato)
       .sort((a, b) => a.proximo_contato.localeCompare(b.proximo_contato))
       .slice(0, mostrarTodasAcoes ? 30 : 6)
-  }, [leads, mostrarTodasAcoes])
+  }, [leadsEscopoKpi, mostrarTodasAcoes])
 
   function handleNovo() {
     setEditing(null)
@@ -151,6 +185,10 @@ export default function ComercialPage() {
   function handleEdit(lead) {
     setEditing(lead)
     setModalOpen(true)
+  }
+
+  function toggleKpiFiltro(valor) {
+    setKpiFiltro((atual) => (atual === valor ? 'todos' : valor))
   }
 
   return (
@@ -177,14 +215,48 @@ export default function ComercialPage() {
         texto="Leads quentes esfriam rápido: quanto antes você entrar em contato depois do primeiro sinal de interesse, maior a chance de fechar. Use o filtro 'Próximo contato' pra nunca deixar ninguém esperando."
       />
 
+      {souGestao && (
+        <div className="kpi-escopo-row">
+          <span className="kpi-escopo-label">
+            {vendedoraSelecionada ? `Mostrando os números de ${vendedoraSelecionada.nome}` : 'Mostrando a visão geral de todas as vendedoras'}
+          </span>
+          {vendedoraSelecionada && (
+            <button type="button" className="btn-secondary kpi-escopo-limpar" onClick={() => setVendedoraFiltro('todas')}>
+              Ver visão geral
+            </button>
+          )}
+        </div>
+      )}
+
       <div className="kpi-grid">
-        <KpiCard tom="green" icon={Users2} value={kpis.ativos} label="Leads ativos" hint="Oportunidades em andamento" />
-        <KpiCard tom="orange" icon={FileText} value={kpis.propostas} label="Propostas enviadas" hint="Aguardando retorno" />
-        <KpiCard tom="red" icon={Handshake} value={kpis.negociacao} label="Em negociação" hint="Oportunidades em avanço" />
-        <KpiCard tom="orange" icon={Clock} value={kpis.followUps} label="Follow-ups pendentes" hint="Ações para hoje e atrasadas" />
-        <KpiCard tom="green" icon={TrendingUp} value={kpis.vendas} label="Vendas (convertidos)" hint="Viraram cliente" />
-        <KpiCard tom="gray" icon={Pause} value={kpis.adiados} label="Adiados" hint="Retorno programado" />
-        <KpiCard tom="red" icon={XCircle} value={kpis.perdidos} label="Perdidos" hint="Oportunidades encerradas" />
+        <KpiCard
+          tom="green" icon={Users2} value={kpis.ativos} label="Leads ativos" hint="Oportunidades em andamento"
+          active={kpiFiltro === 'ativos'} onClick={() => toggleKpiFiltro('ativos')}
+        />
+        <KpiCard
+          tom="orange" icon={FileText} value={kpis.propostas} label="Propostas enviadas" hint="Aguardando retorno"
+          active={kpiFiltro === 'propostas'} onClick={() => toggleKpiFiltro('propostas')}
+        />
+        <KpiCard
+          tom="red" icon={Handshake} value={kpis.negociacao} label="Em negociação" hint="Oportunidades em avanço"
+          active={kpiFiltro === 'negociacao'} onClick={() => toggleKpiFiltro('negociacao')}
+        />
+        <KpiCard
+          tom="orange" icon={Clock} value={kpis.followUps} label="Follow-ups pendentes" hint="Ações para hoje e atrasadas"
+          active={kpiFiltro === 'followups'} onClick={() => toggleKpiFiltro('followups')}
+        />
+        <KpiCard
+          tom="green" icon={TrendingUp} value={kpis.vendas} label="Vendas (convertidos)" hint="Viraram cliente"
+          active={kpiFiltro === 'vendas'} onClick={() => toggleKpiFiltro('vendas')}
+        />
+        <KpiCard
+          tom="gray" icon={Pause} value={kpis.adiados} label="Adiados" hint="Retorno programado"
+          active={kpiFiltro === 'adiados'} onClick={() => toggleKpiFiltro('adiados')}
+        />
+        <KpiCard
+          tom="red" icon={XCircle} value={kpis.perdidos} label="Perdidos" hint="Oportunidades encerradas"
+          active={kpiFiltro === 'perdidos'} onClick={() => toggleKpiFiltro('perdidos')}
+        />
       </div>
 
       <div className="comercial-layout">
@@ -233,7 +305,14 @@ export default function ComercialPage() {
             )}
           </div>
 
-          <div className="results-count">LEADS ({filtrados.length})</div>
+          <div className="results-count">
+            LEADS ({filtrados.length})
+            {kpiFiltro !== 'todos' && (
+              <button type="button" className="kpi-filtro-chip" onClick={() => setKpiFiltro('todos')}>
+                {KPI_FILTRO_LABELS[kpiFiltro]} · limpar ✕
+              </button>
+            )}
+          </div>
 
           {error && <div className="error-box">Erro ao carregar leads: {error}</div>}
 
@@ -324,7 +403,7 @@ export default function ComercialPage() {
               )
             })
           )}
-          {!mostrarTodasAcoes && leads.filter((l) => !l.convertido && l.proximo_contato).length > 6 && (
+          {!mostrarTodasAcoes && leadsEscopoKpi.filter((l) => !l.convertido && l.proximo_contato).length > 6 && (
             <button type="button" className="btn-secondary proximas-acoes-mais" onClick={() => setMostrarTodasAcoes(true)}>
               Ver todas as próximas ações
             </button>

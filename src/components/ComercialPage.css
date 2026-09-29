@@ -19,6 +19,57 @@
   border-radius: 10px;
   border: 1px solid var(--border);
   background: var(--bg-card);
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+}
+
+.kpi-card.clickable {
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.1s;
+}
+
+.kpi-card.clickable:hover {
+  border-color: var(--text-muted);
+}
+
+.kpi-card.clickable:active {
+  transform: scale(0.98);
+}
+
+.kpi-card.active {
+  border-color: var(--green);
+  box-shadow: 0 0 0 1px var(--green);
+}
+
+.kpi-escopo-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.kpi-escopo-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.kpi-escopo-limpar {
+  padding: 4px 10px;
+  font-size: 11px;
+}
+
+.kpi-filtro-chip {
+  margin-left: 10px;
+  padding: 3px 10px;
+  border-radius: 100px;
+  border: 1px solid var(--green);
+  color: var(--green);
+  background: rgba(163, 230, 53, 0.1);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .kpi-card-icon {
