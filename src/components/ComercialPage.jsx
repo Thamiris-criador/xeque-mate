@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from 'react'
 import {
-  Plus, Users2, FileText, Handshake, Clock, TrendingUp, Pause, XCircle,
+  Plus, Users2, Handshake, Clock, TrendingUp, XCircle,
   Phone, MessageCircle, MoreVertical, Target,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
@@ -36,12 +36,10 @@ function KpiCard({ icon: Icon, value, label, hint, tom, onClick, active }) {
 
 const KPI_FILTRO_LABELS = {
   ativos: 'Leads ativos',
-  propostas: 'Propostas enviadas',
   negociacao: 'Em negociação',
   followups: 'Follow-ups pendentes',
-  vendas: 'Vendas (convertidos)',
-  adiados: 'Adiados',
-  perdidos: 'Perdidos',
+  vendas: 'Vendas fechadas',
+  sem_sucesso: 'Sem sucesso',
 }
 
 function formatarProximoContato(dataStr) {
@@ -127,14 +125,12 @@ export default function ComercialPage() {
 
   const kpis = useMemo(() => {
     const hoje = new Date().toISOString().slice(0, 10)
-    const ativos = leadsEscopoKpi.filter((l) => !l.convertido && !['perdido', 'sem_interesse', 'adiado'].includes(l.status))
-    const propostas = leadsEscopoKpi.filter((l) => l.status === 'proposta_enviada').length
-    const negociacao = leadsEscopoKpi.filter((l) => l.status === 'em_negociacao').length
-    const followUps = leadsEscopoKpi.filter((l) => !l.convertido && l.proximo_contato && l.proximo_contato <= hoje).length
-    const vendas = leadsEscopoKpi.filter((l) => l.convertido).length
-    const adiados = leadsEscopoKpi.filter((l) => l.status === 'adiado').length
-    const perdidos = leadsEscopoKpi.filter((l) => l.status === 'perdido').length
-    return { ativos: ativos.length, propostas, negociacao, followUps, vendas, adiados, perdidos }
+    const ativos = leadsEscopoKpi.filter((l) => !l.convertido && !['perdido', 'sem_interesse', 'adiado', 'fechado'].includes(l.status)).length
+    const negociacao = leadsEscopoKpi.filter((l) => ['proposta_enviada', 'em_negociacao'].includes(l.status)).length
+    const followUps = leadsEscopoKpi.filter((l) => !l.convertido && l.status !== 'fechado' && l.proximo_contato && l.proximo_contato <= hoje).length
+    const vendas = leadsEscopoKpi.filter((l) => l.convertido || l.status === 'fechado').length
+    const semSucesso = leadsEscopoKpi.filter((l) => ['perdido', 'sem_interesse'].includes(l.status)).length
+    return { ativos, negociacao, followUps, vendas, semSucesso }
   }, [leadsEscopoKpi])
 
   const filtrados = useMemo(() => {
@@ -146,13 +142,11 @@ export default function ComercialPage() {
       if (statusFiltro !== 'todos' && l.status !== statusFiltro) return false
       if (temperaturaFiltro !== 'todas' && l.temperatura !== temperaturaFiltro) return false
 
-      if (kpiFiltro === 'ativos' && (l.convertido || ['perdido', 'sem_interesse', 'adiado'].includes(l.status))) return false
-      if (kpiFiltro === 'propostas' && l.status !== 'proposta_enviada') return false
-      if (kpiFiltro === 'negociacao' && l.status !== 'em_negociacao') return false
-      if (kpiFiltro === 'followups' && (l.convertido || !l.proximo_contato || l.proximo_contato > hoje)) return false
-      if (kpiFiltro === 'vendas' && !l.convertido) return false
-      if (kpiFiltro === 'adiados' && l.status !== 'adiado') return false
-      if (kpiFiltro === 'perdidos' && l.status !== 'perdido') return false
+      if (kpiFiltro === 'ativos' && (l.convertido || ['perdido', 'sem_interesse', 'adiado', 'fechado'].includes(l.status))) return false
+      if (kpiFiltro === 'negociacao' && !['proposta_enviada', 'em_negociacao'].includes(l.status)) return false
+      if (kpiFiltro === 'followups' && (l.convertido || l.status === 'fechado' || !l.proximo_contato || l.proximo_contato > hoje)) return false
+      if (kpiFiltro === 'vendas' && !(l.convertido || l.status === 'fechado')) return false
+      if (kpiFiltro === 'sem_sucesso' && !['perdido', 'sem_interesse'].includes(l.status)) return false
       if ((entradaFiltro === 'hoje' || entradaFiltro === 'semana') && !dentroDoPeriodo(l.data_entrada, entradaFiltro)) return false
       if (/^\d{4}-\d{2}$/.test(entradaFiltro) && l.data_entrada?.slice(0, 7) !== entradaFiltro) return false
 
@@ -234,28 +228,20 @@ export default function ComercialPage() {
           active={kpiFiltro === 'ativos'} onClick={() => toggleKpiFiltro('ativos')}
         />
         <KpiCard
-          tom="orange" icon={FileText} value={kpis.propostas} label="Propostas enviadas" hint="Aguardando retorno"
-          active={kpiFiltro === 'propostas'} onClick={() => toggleKpiFiltro('propostas')}
-        />
-        <KpiCard
-          tom="red" icon={Handshake} value={kpis.negociacao} label="Em negociação" hint="Oportunidades em avanço"
+          tom="orange" icon={Handshake} value={kpis.negociacao} label="Em negociação" hint="Proposta enviada ou negociando"
           active={kpiFiltro === 'negociacao'} onClick={() => toggleKpiFiltro('negociacao')}
         />
         <KpiCard
-          tom="orange" icon={Clock} value={kpis.followUps} label="Follow-ups pendentes" hint="Ações para hoje e atrasadas"
+          tom="red" icon={Clock} value={kpis.followUps} label="Follow-ups pendentes" hint="Ações para hoje e atrasadas"
           active={kpiFiltro === 'followups'} onClick={() => toggleKpiFiltro('followups')}
         />
         <KpiCard
-          tom="green" icon={TrendingUp} value={kpis.vendas} label="Vendas (convertidos)" hint="Viraram cliente"
+          tom="green" icon={TrendingUp} value={kpis.vendas} label="Vendas fechadas" hint="Fechado ou convertido em cliente"
           active={kpiFiltro === 'vendas'} onClick={() => toggleKpiFiltro('vendas')}
         />
         <KpiCard
-          tom="gray" icon={Pause} value={kpis.adiados} label="Adiados" hint="Retorno programado"
-          active={kpiFiltro === 'adiados'} onClick={() => toggleKpiFiltro('adiados')}
-        />
-        <KpiCard
-          tom="red" icon={XCircle} value={kpis.perdidos} label="Perdidos" hint="Oportunidades encerradas"
-          active={kpiFiltro === 'perdidos'} onClick={() => toggleKpiFiltro('perdidos')}
+          tom="gray" icon={XCircle} value={kpis.semSucesso} label="Sem sucesso" hint="Perdido ou sem interesse"
+          active={kpiFiltro === 'sem_sucesso'} onClick={() => toggleKpiFiltro('sem_sucesso')}
         />
       </div>
 
