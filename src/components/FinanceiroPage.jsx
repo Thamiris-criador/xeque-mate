@@ -72,7 +72,7 @@ export default function FinanceiroPage() {
     Promise.all([
       supabase
         .from('clientes')
-        .select('id, nome, financeiro_status, data_promessa, pagamento_compensado, data_compensacao, brindes_prometidos, brindes_entregues, brindes_data, brindes_confirmacoes'),
+        .select('id, nome, financeiro_status, data_promessa, pagamento_compensado, data_compensacao, brindes_prometidos, brindes_entregues, brindes_data, brindes_confirmacoes, obs_cliente'),
       supabase.from('reversoes').select('status, data_pedido, data_reversao, valor_bonificacao'),
     ]).then(([c, r]) => {
       const fetchError = c.error || r.error
@@ -298,6 +298,7 @@ export default function FinanceiroPage() {
                     {c.nome}
                     {c.brindes_data && <span className="equipe-email"> · combinado para {formatarData(c.brindes_data)}</span>}
                   </div>
+                  {c.obs_cliente && <div className="brinde-obs-cliente">Obs. do cadastro: {c.obs_cliente}</div>}
                   <div className="etapa-stepper">
                     {(c.brindes_prometidos || []).map((brindeKey) => {
                       const opcao = BRINDES_OPCOES.find((b) => b.key === brindeKey)

@@ -127,6 +127,8 @@ export const BRINDES_OPCOES = [
   { key: 'pix', label: 'Pix' },
   { key: 'parcela', label: 'Parcela' },
   { key: 'moletom', label: 'Moletom' },
+  { key: 'camiseta', label: 'Camiseta' },
+  { key: 'bone', label: 'Boné' },
   { key: 'emplacamento', label: 'Emplacamento' },
   { key: 'chaveiro', label: 'Chaveiro' },
 ]

@@ -1,8 +1,13 @@
 import { useState } from 'react'
-import { X, Trash2 } from 'lucide-react'
+import { X, Trash2, History } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
-import { TIPOS_CONTEUDO_POS_VENDAS, CANAIS_CONTEUDO } from '../lib/negocio.js'
+import { TIPOS_CONTEUDO_POS_VENDAS, CANAIS_CONTEUDO, TAREFA_STATUS_LABELS } from '../lib/negocio.js'
 import './ClientModal.css'
+
+function formatarDataHora(iso) {
+  const d = new Date(iso)
+  return `${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
+}
 
 export default function TarefaModal({
   tarefa, clientes, responsaveis, presetClienteId, presetCategoria, presetResponsavelId,
@@ -239,6 +244,23 @@ export default function TarefaModal({
           {isEdit && tarefa?.created_at && (
             <div className="tarefa-criada-em">
               Criada em {new Date(tarefa.created_at).toLocaleDateString('pt-BR')} às {new Date(tarefa.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+            </div>
+          )}
+
+          {isEdit && (tarefa?.historico_status || []).length > 0 && (
+            <div className="tarefa-historico">
+              <div className="tarefa-historico-titulo">
+                <History size={13} /> Histórico
+              </div>
+              {[...tarefa.historico_status].reverse().map((h, i) => (
+                <div className="tarefa-historico-item" key={i}>
+                  <span className="tarefa-historico-transicao">
+                    {TAREFA_STATUS_LABELS[h.de] || h.de || 'Criada'} → {TAREFA_STATUS_LABELS[h.para] || h.para}
+                  </span>
+                  <span className="tarefa-historico-meta">{formatarDataHora(h.em)} · {h.usuario || 'sistema'}</span>
+                  {h.observacao && <span className="tarefa-historico-obs">{h.observacao}</span>}
+                </div>
+              ))}
             </div>
           )}
 
