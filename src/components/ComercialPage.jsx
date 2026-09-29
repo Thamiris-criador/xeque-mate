@@ -190,11 +190,8 @@ export default function ComercialPage() {
       <div className="page-header">
         <div>
           <h1 className="page-title">COMERCIAL</h1>
-          <p className="page-subtitle" style={{ fontWeight: 700, color: 'var(--text)', marginBottom: 2 }}>
-            Do primeiro contato ao próximo passo.
-          </p>
           <p className="page-subtitle">
-            Acompanhe seus leads, organize suas negociações e não perca nenhuma oportunidade de venda.
+            Do primeiro contato ao próximo passo — acompanhe seus leads e não perca nenhuma venda.
             {!souGestao && ' Você vê apenas os leads da sua própria carteira.'}
           </p>
         </div>

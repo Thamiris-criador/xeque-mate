@@ -228,8 +228,19 @@ export default function TarefaModal({
 
           <label>
             Observação
-            <input value={form.observacao} onChange={(e) => update('observacao', e.target.value)} />
+            <textarea
+              rows={4}
+              value={form.observacao}
+              onChange={(e) => update('observacao', e.target.value)}
+              placeholder="Detalhes do que foi feito, combinado ou precisa de atenção..."
+            />
           </label>
+
+          {isEdit && tarefa?.created_at && (
+            <div className="tarefa-criada-em">
+              Criada em {new Date(tarefa.created_at).toLocaleDateString('pt-BR')} às {new Date(tarefa.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+            </div>
+          )}
 
           {error && <div className="modal-error">{error}</div>}
 

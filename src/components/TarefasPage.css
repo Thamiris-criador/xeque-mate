@@ -1,3 +1,28 @@
+.tarefa-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 220px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0 12px;
+  color: var(--text-muted);
+}
+
+.tarefa-search input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 10px 0;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.tarefa-search input:focus {
+  outline: none;
+}
+
 .tarefas-list {
   display: flex;
   flex-direction: column;
@@ -130,6 +155,7 @@
 .kanban-coluna {
   background: var(--bg-sidebar);
   border: 1px solid var(--border);
+  border-top: 3px solid var(--border);
   border-radius: 10px;
   padding: 12px;
   min-height: 120px;
@@ -142,41 +168,99 @@
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.4px;
-  color: var(--text-muted);
   text-transform: uppercase;
   margin-bottom: 10px;
   padding-bottom: 8px;
-  border-bottom: 2px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.kanban-coluna-count {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 1px 9px;
+  border-radius: 999px;
+  border: 1px solid;
+}
+
+.kanban-vazio {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 18px 8px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
 }
 
 .kanban-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-left: 3px solid var(--border);
   border-radius: 8px;
   padding: 10px 12px;
   margin-bottom: 8px;
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  transition: border-color 0.12s;
 }
 
 .kanban-card:hover {
   background: var(--bg-hover);
+  border-color: var(--green);
 }
 
-.kanban-card-atrasada {
-  background: rgba(224, 90, 90, 0.08);
+.kanban-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
 }
 
 .kanban-card-titulo {
   font-size: 12px;
   font-weight: 700;
-  margin-bottom: 4px;
+  flex: 1;
+  line-height: 1.4;
 }
 
-.kanban-card-meta {
+.kanban-prioridade-pill {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.kanban-card-badge {
+  align-self: flex-start;
+  font-size: 9px;
+}
+
+.kanban-card-linha {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   font-size: 11px;
   color: var(--text-muted);
+}
+
+.kanban-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.kanban-card-footer .tarefa-avatar {
+  width: 22px;
+  height: 22px;
+}
+
+.kanban-card-responsavel {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
 }

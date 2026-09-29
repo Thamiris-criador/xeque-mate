@@ -9,6 +9,7 @@ import { BRINDES_OPCOES, formatarData } from '../lib/negocio.js'
 import './Dashboard.css'
 import './ClientesPage.css'
 import './EquipePage.css'
+import './FinanceiroPage.css'
 
 const FINANCEIRO_STATUS_ORDER = ['em_dia', 'inadimplente', 'acordo', 'cancelado', 'contemplado']
 
@@ -64,12 +65,14 @@ export default function FinanceiroPage() {
   const [dataInicio, setDataInicio] = useState('')
   const [dataFim, setDataFim] = useState('')
   const [graficoStatus, setGraficoStatus] = useState('barra')
+  const [confirmando, setConfirmando] = useState(null) // { clienteId, brindeKey }
+  const [formConfirmacao, setFormConfirmacao] = useState({ data: '', obs: '' })
 
   useEffect(() => {
     Promise.all([
       supabase
         .from('clientes')
-        .select('id, nome, financeiro_status, data_promessa, pagamento_compensado, data_compensacao, brindes_prometidos, brindes_entregues, brindes_data'),
+        .select('id, nome, financeiro_status, data_promessa, pagamento_compensado, data_compensacao, brindes_prometidos, brindes_entregues, brindes_data, brindes_confirmacoes'),
       supabase.from('reversoes').select('status, data_pedido, data_reversao, valor_bonificacao'),
     ]).then(([c, r]) => {
       const fetchError = c.error || r.error
@@ -126,29 +129,42 @@ export default function FinanceiroPage() {
     return clientes.filter((c) => (c.brindes_prometidos || []).some((b) => !(c.brindes_entregues || []).includes(b)))
   }, [clientes])
 
-  async function handleEntregarBrinde(clienteId, brindeKey) {
+  async function handleConfirmarBrinde(clienteId, brindeKey, dataEnvio, obs) {
     const anterior = clientes
-    setClientes((cs) =>
-      cs.map((c) => {
-        if (c.id !== clienteId) return c
-        const entregues = c.brindes_entregues || []
-        const jaEntregue = entregues.includes(brindeKey)
-        return {
-          ...c,
-          brindes_entregues: jaEntregue ? entregues.filter((b) => b !== brindeKey) : [...entregues, brindeKey],
-        }
-      })
-    )
-
     const clienteAtual = anterior.find((c) => c.id === clienteId)
     const entreguesAtuais = clienteAtual?.brindes_entregues || []
-    const novoValor = entreguesAtuais.includes(brindeKey)
-      ? entreguesAtuais.filter((b) => b !== brindeKey)
-      : [...entreguesAtuais, brindeKey]
+    const novoEntregues = entreguesAtuais.includes(brindeKey) ? entreguesAtuais : [...entreguesAtuais, brindeKey]
+    const novasConfirmacoes = { ...(clienteAtual?.brindes_confirmacoes || {}), [brindeKey]: { data: dataEnvio, obs: obs || null } }
+
+    setClientes((cs) =>
+      cs.map((c) => (c.id === clienteId ? { ...c, brindes_entregues: novoEntregues, brindes_confirmacoes: novasConfirmacoes } : c))
+    )
 
     const { error: updateError } = await supabase
       .from('clientes')
-      .update({ brindes_entregues: novoValor })
+      .update({ brindes_entregues: novoEntregues, brindes_confirmacoes: novasConfirmacoes })
+      .eq('id', clienteId)
+
+    if (updateError) {
+      setClientes(anterior)
+      setError(updateError.message)
+    }
+  }
+
+  async function handleDesfazerBrinde(clienteId, brindeKey) {
+    const anterior = clientes
+    const clienteAtual = anterior.find((c) => c.id === clienteId)
+    const novoEntregues = (clienteAtual?.brindes_entregues || []).filter((b) => b !== brindeKey)
+    const novasConfirmacoes = { ...(clienteAtual?.brindes_confirmacoes || {}) }
+    delete novasConfirmacoes[brindeKey]
+
+    setClientes((cs) =>
+      cs.map((c) => (c.id === clienteId ? { ...c, brindes_entregues: novoEntregues, brindes_confirmacoes: novasConfirmacoes } : c))
+    )
+
+    const { error: updateError } = await supabase
+      .from('clientes')
+      .update({ brindes_entregues: novoEntregues, brindes_confirmacoes: novasConfirmacoes })
       .eq('id', clienteId)
 
     if (updateError) {
@@ -286,16 +302,67 @@ export default function FinanceiroPage() {
                     {(c.brindes_prometidos || []).map((brindeKey) => {
                       const opcao = BRINDES_OPCOES.find((b) => b.key === brindeKey)
                       const entregue = (c.brindes_entregues || []).includes(brindeKey)
+                      const confirmacao = (c.brindes_confirmacoes || {})[brindeKey]
+                      const estaAbrindo = confirmando?.clienteId === c.id && confirmando?.brindeKey === brindeKey
                       return (
-                        <button
-                          key={brindeKey}
-                          type="button"
-                          className={`etapa-step${entregue ? ' current' : ''}`}
-                          onClick={() => handleEntregarBrinde(c.id, brindeKey)}
-                          title={entregue ? 'Marcar como não entregue' : 'Marcar como entregue'}
-                        >
-                          {opcao?.label || brindeKey}{entregue ? ' ✓' : ''}
-                        </button>
+                        <div key={brindeKey} className="brinde-item">
+                          <button
+                            type="button"
+                            className={`etapa-step${entregue ? ' current' : ''}`}
+                            onClick={() => {
+                              if (entregue) return
+                              setConfirmando({ clienteId: c.id, brindeKey })
+                              setFormConfirmacao({ data: new Date().toISOString().slice(0, 10), obs: '' })
+                            }}
+                            title={entregue ? `Entregue em ${formatarData(confirmacao?.data)}` : 'Confirmar entrega'}
+                          >
+                            {opcao?.label || brindeKey}{entregue ? ' ✓' : ''}
+                          </button>
+                          {entregue && confirmacao && (
+                            <span className="brinde-confirmado-info">
+                              Enviado em {formatarData(confirmacao.data)}{confirmacao.obs && ` · ${confirmacao.obs}`}
+                              <button type="button" className="brinde-desfazer" onClick={() => handleDesfazerBrinde(c.id, brindeKey)}>
+                                Desfazer
+                              </button>
+                            </span>
+                          )}
+                          {estaAbrindo && (
+                            <div className="brinde-confirmar-form">
+                              <label>
+                                Data de envio
+                                <input
+                                  type="date"
+                                  value={formConfirmacao.data}
+                                  onChange={(e) => setFormConfirmacao((f) => ({ ...f, data: e.target.value }))}
+                                />
+                              </label>
+                              <label>
+                                Observação
+                                <input
+                                  value={formConfirmacao.obs}
+                                  onChange={(e) => setFormConfirmacao((f) => ({ ...f, obs: e.target.value }))}
+                                  placeholder="Opcional"
+                                />
+                              </label>
+                              <div className="brinde-confirmar-acoes">
+                                <button type="button" className="btn-secondary" onClick={() => setConfirmando(null)}>
+                                  Cancelar
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn-primary"
+                                  disabled={!formConfirmacao.data}
+                                  onClick={() => {
+                                    handleConfirmarBrinde(c.id, brindeKey, formConfirmacao.data, formConfirmacao.obs.trim())
+                                    setConfirmando(null)
+                                  }}
+                                >
+                                  Confirmar envio
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       )
                     })}
                   </div>

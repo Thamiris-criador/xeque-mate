@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from 'react'
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react'
 import { Plus, Eye, FileText, KeyRound, CheckCircle2 } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import ClientModal from './ClientModal.jsx'
@@ -81,7 +81,7 @@ function ProximaAcaoBadge({ value }) {
   return <span className="proxima-acao-text">{value}</span>
 }
 
-export default function ClientesPage({ isAdmin, tabInicial }) {
+export default function ClientesPage({ isAdmin, tabInicial, clienteIdInicial }) {
   const [tab, setTab] = useState(tabInicial || 'todos')
   const [search, setSearch] = useState('')
   const [responsavelFiltro, setResponsavelFiltro] = useState('todos')
@@ -184,6 +184,17 @@ export default function ClientesPage({ isAdmin, tabInicial }) {
     setEditingClient(client)
     setModalOpen(true)
   }
+
+  const clienteInicialAberto = useRef(null)
+  useEffect(() => {
+    if (!clienteIdInicial || clientes.length === 0) return
+    if (clienteInicialAberto.current === clienteIdInicial) return
+    const alvo = clientes.find((c) => String(c.id) === String(clienteIdInicial))
+    if (alvo) {
+      clienteInicialAberto.current = clienteIdInicial
+      handleEdit(alvo)
+    }
+  }, [clienteIdInicial, clientes])
 
   function handleNew() {
     setEditingClient(null)

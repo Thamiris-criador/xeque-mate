@@ -1,9 +1,16 @@
 import { useEffect, useMemo, useState, useCallback } from 'react'
-import { Plus, List, LayoutGrid, UserRound } from 'lucide-react'
+import { Plus, List, LayoutGrid, UserRound, Building2, CalendarDays, Search, X } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import TarefaModal from './TarefaModal.jsx'
 import { PRIORIDADE_COLOR, PRIORIDADE_LABELS, TAREFA_STATUS_LABELS, classificarDataTarefa, formatarData } from '../lib/negocio.js'
 import './TarefasPage.css'
+
+const STATUS_COR = {
+  pendente: 'var(--blue)',
+  em_andamento: 'var(--orange)',
+  concluida: 'var(--green)',
+  cancelada: 'var(--gray-chart)',
+}
 
 const FILTROS_DATA = [
   { key: 'todas', label: 'Todas' },
@@ -42,6 +49,7 @@ export default function TarefasPage({ data: dataInicial, status: statusInicial }
   const [editing, setEditing] = useState(null)
   const [visualizacao, setVisualizacao] = useState('kanban')
 
+  const [busca, setBusca] = useState('')
   const [filtroData, setFiltroData] = useState(dataInicial || 'todas')
   const [filtroResponsavel, setFiltroResponsavel] = useState('todos')
   const [filtroPrioridade, setFiltroPrioridade] = useState('todas')
@@ -80,9 +88,15 @@ export default function TarefasPage({ data: dataInicial, status: statusInicial }
       if (filtroStatus === 'abertas' && ['concluida', 'cancelada'].includes(t.status)) return false
       if (filtroStatus === 'concluidas' && t.status !== 'concluida') return false
       if (filtroStatus === 'canceladas' && t.status !== 'cancelada') return false
+      if (busca.trim()) {
+        const q = busca.trim().toLowerCase()
+        const alvo = [t.titulo, t.descricao, t.cliente?.nome, t.lead?.nome, t.responsavel?.nome]
+          .filter(Boolean).join(' ').toLowerCase()
+        if (!alvo.includes(q)) return false
+      }
       return true
     })
-  }, [tarefas, filtroData, filtroResponsavel, filtroPrioridade, filtroStatus])
+  }, [tarefas, busca, filtroData, filtroResponsavel, filtroPrioridade, filtroStatus])
 
   const grupos = useMemo(() => {
     const map = new Map()
@@ -133,6 +147,10 @@ export default function TarefasPage({ data: dataInicial, status: statusInicial }
       </div>
 
       <div className="filters-row" style={{ alignItems: 'center' }}>
+        <div className="tarefa-search">
+          <Search size={14} />
+          <input placeholder="Pesquisar tarefa..." value={busca} onChange={(e) => setBusca(e.target.value)} />
+        </div>
         <select className="filter-select" value={filtroResponsavel} onChange={(e) => setFiltroResponsavel(e.target.value)}>
           <option value="todos">Todos os responsáveis</option>
           {responsaveis.map((r) => (
@@ -153,6 +171,15 @@ export default function TarefasPage({ data: dataInicial, status: statusInicial }
           <option value="concluidas">Concluídas</option>
           <option value="canceladas">Canceladas</option>
         </select>
+        {(busca || filtroResponsavel !== 'todos' || filtroPrioridade !== 'todas' || filtroStatus !== 'todas') && (
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={() => { setBusca(''); setFiltroResponsavel('todos'); setFiltroPrioridade('todas'); setFiltroStatus('todas') }}
+          >
+            <X size={13} /> Limpar
+          </button>
+        )}
 
         <div className="view-toggle" style={{ marginLeft: 'auto' }}>
           <button
@@ -184,29 +211,47 @@ export default function TarefasPage({ data: dataInicial, status: statusInicial }
         <div className="kanban-board">
           {COLUNAS_KANBAN.map((coluna) => {
             const tarefasColuna = filtradas.filter((t) => t.status === coluna.key)
+            const cor = STATUS_COR[coluna.key]
             return (
-              <div className="kanban-coluna" key={coluna.key}>
+              <div className="kanban-coluna" key={coluna.key} style={{ borderTopColor: cor }}>
                 <div className="kanban-coluna-header">
-                  <span>{coluna.label}</span>
-                  <span>{tarefasColuna.length}</span>
+                  <span style={{ color: cor }}>{coluna.label}</span>
+                  <span className="kanban-coluna-count" style={{ color: cor, borderColor: cor }}>{tarefasColuna.length}</span>
                 </div>
-                {tarefasColuna.map((t) => (
-                  <div
-                    className={`kanban-card${estaAtrasada(t) ? ' kanban-card-atrasada' : ''}`}
-                    key={t.id}
-                    style={{ borderLeftColor: estaAtrasada(t) ? 'var(--red)' : PRIORIDADE_COLOR[t.prioridade] }}
-                    onClick={() => handleEdit(t)}
-                  >
-                    <div className="kanban-card-titulo">
-                      {estaAtrasada(t) && <span className="badge badge-red" style={{ marginRight: 6 }}>ATRASADA</span>}
-                      {t.titulo}
-                    </div>
-                    <div className="kanban-card-meta">
-                      <Avatar pessoa={t.responsavel} />
-                      {t.lead ? `Lead: ${t.lead.nome}` : t.cliente?.nome || 'Sem cliente'} · {t.responsavel?.nome || 'Sem responsável'} · {formatarData(t.data)}
-                    </div>
-                  </div>
-                ))}
+                {tarefasColuna.length === 0 ? (
+                  <div className="kanban-vazio">Nenhuma tarefa</div>
+                ) : (
+                  tarefasColuna.map((t) => {
+                    const atrasada = estaAtrasada(t)
+                    const hoje = classificarDataTarefa(t.data) === 'hoje'
+                    return (
+                      <div className="kanban-card" key={t.id} onClick={() => handleEdit(t)}>
+                        <div className="kanban-card-top">
+                          <span className="kanban-card-titulo">{t.titulo}</span>
+                          <span
+                            className="kanban-prioridade-pill"
+                            style={{ color: PRIORIDADE_COLOR[t.prioridade], background: `color-mix(in srgb, ${PRIORIDADE_COLOR[t.prioridade]} 16%, transparent)` }}
+                          >
+                            {PRIORIDADE_LABELS[t.prioridade]}
+                          </span>
+                        </div>
+                        {atrasada && <span className="badge badge-red kanban-card-badge">ATRASADA</span>}
+                        <div className="kanban-card-linha">
+                          <Building2 size={12} />
+                          {t.lead ? `Lead: ${t.lead.nome}` : t.cliente?.nome || 'Sem cliente'}
+                        </div>
+                        <div className="kanban-card-linha" style={{ color: atrasada ? 'var(--red)' : hoje ? 'var(--orange)' : undefined }}>
+                          <CalendarDays size={12} />
+                          {formatarData(t.data)}{t.horario && ` às ${t.horario.slice(0, 5)}`}
+                        </div>
+                        <div className="kanban-card-footer">
+                          <Avatar pessoa={t.responsavel} />
+                          <span className="kanban-card-responsavel">{t.responsavel?.nome || 'Sem responsável'}</span>
+                        </div>
+                      </div>
+                    )
+                  })
+                )}
               </div>
             )
           })}

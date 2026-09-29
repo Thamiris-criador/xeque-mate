@@ -1,0 +1,59 @@
+.brinde-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.brinde-confirmado-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.brinde-desfazer {
+  background: transparent;
+  border: none;
+  color: var(--red);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.brinde-confirmar-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.brinde-confirmar-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.brinde-confirmar-form input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 7px 10px;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.brinde-confirmar-acoes {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}

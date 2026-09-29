@@ -104,12 +104,14 @@ export default function App() {
           pageLabel={PAGE_TITLES[page]}
           userEmail={session.user.email}
           onLogout={() => supabase.auth.signOut()}
+          onNavigate={irPara}
+          podeBuscarClientes={!isVendedora}
         />
         <div className="app-content">
           {!paginaLiberada ? (
             <PlaceholderPage title="Acesso restrito" subtitle="Você não tem permissão para acessar esta área." />
           ) : page === 'clientes' ? (
-            <ClientesPage isAdmin={isAdmin} tabInicial={navParams.tab} />
+            <ClientesPage isAdmin={isAdmin} tabInicial={navParams.tab} clienteIdInicial={navParams.clienteId} />
           ) : page === 'dashboard' ? (
             <Dashboard onNavigate={irPara} />
           ) : page === 'equipe' ? (
